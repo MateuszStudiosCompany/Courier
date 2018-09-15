@@ -1,21 +1,21 @@
 apply plugin:'java'
 
-version = '1.2.1'
+version = '1.2.2'
 
 repositories {
     mavenCentral()
 
     maven {
-        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots'
     }
 
     maven {
-        url 'http://nexus.theyeticave.net/content/repositories/pub_releases'
+        url = 'http://nexus.hc.to/content/repositories/pub_releases'
     }
 }
 
 dependencies {
-    compile 'net.milkbowl.vault:Vault:1.5.4'
+    compile 'net.milkbowl.vault:VaultAPI:1.7'
 }
 
 processResources {

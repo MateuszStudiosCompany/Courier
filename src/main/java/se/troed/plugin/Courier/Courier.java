@@ -18,9 +18,12 @@ package se.troed.plugin.Courier;
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-import net.milkbowl.vault.Vault;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.*;
+import org.bukkit.Difficulty;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -92,7 +95,6 @@ public class Courier extends JavaPlugin {
     private static final int DBVERSION = 1; // used since 1.0.0
     private static final String RSS_URL = "http://dev.bukkit.org/server-mods/courier/files.rss";
 
-    private static Vault vault = null;
     private static Economy economy = null;
 
     private final Tracker tracker = new Tracker(this); // must be done before CourierEventListener
@@ -550,22 +552,15 @@ public class Courier extends JavaPlugin {
 
         // if config says we should use economy, require vault + economy support
         if(!abort && config.getUseFees()) {
-            Plugin x = getServer().getPluginManager().getPlugin("Vault");
-            if(x != null && x instanceof Vault) {
-                vault = (Vault) x;
-
-                if(setupEconomy()) {
-                    config.clog(Level.INFO, "Courier has linked to " + economy.getName() + " through Vault");
-                } else {
-                    config.clog(Level.SEVERE, "Vault could not find an Economy plugin installed!");
-                    abort = true;
-                }
-            } else {
-                config.clog(Level.SEVERE, "Courier relies on Vault for economy support and Vault isn't installed!");
-                config.clog(Level.INFO, "See http://dev.bukkit.org/server-mods/vault/");
-                config.clog(Level.INFO, "If you don't want economy support, set UseFees to false in Courier config.");
-                abort = true;
-            }
+			if(setupEconomy()) {
+				config.clog(Level.INFO, "Courier has linked to " + economy.getName() + " through Vault");
+			} else {
+				config.clog(Level.SEVERE, "Courier relies on Vault for economy support and either Vault isn't"
+						+ " installed or it could not find an Economy plugin!");
+				config.clog(Level.INFO, "See http://dev.bukkit.org/server-mods/vault/");
+				config.clog(Level.INFO, "If you don't want economy support, set UseFees to false in Courier config.");
+				abort = true;
+			}
         }
 
         // Warn about "facepalm" moments:
@@ -635,13 +630,18 @@ public class Courier extends JavaPlugin {
         return config;
     }
 
-    private Boolean setupEconomy() {
-        RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
-        if (economyProvider != null) {
-            economy = economyProvider.getProvider();
+    private boolean setupEconomy() {
+
+		if (getServer().getPluginManager().getPlugin("Vault") == null) {
+			return false;
+		}
+        RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(Economy.class);
+        if (economyProvider == null) {
+            return false;
         }
 
-        return (economy != null);
+		economy = economyProvider.getProvider();
+        return economy != null;
     }
 
     // Thanks to Sleaker & vault for the hint and code on how to use BukkitDev RSS feed for this
