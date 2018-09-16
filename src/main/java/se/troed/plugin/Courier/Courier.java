@@ -259,7 +259,7 @@ public class Courier extends JavaPlugin {
                     String checkVersion = null;
                     // updateCheck returns "Courier v1.2.3" - extract "1.2.3"
                     String[] parsed = updateCheck(version).split(" v");
-                    if(parsed != null && parsed.length > 0) {
+                    if(parsed != null && parsed.length > 1) {
                         checkVersion = parsed[1];
                     }
                     if(checkVersion == null) {
