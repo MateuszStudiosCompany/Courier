@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.MapMeta;
 
 /**
  * A Postman is a friendly Creature, tirelessly carrying around our mail
@@ -32,8 +33,11 @@ public abstract class Postman {
         player = p;
         type = t;
         // Postmen, like players doing /letter, can create actual Items
-        letterItem = new ItemStack(Material.MAP, 1, plug.getCourierdb().getCourierMapId());
+        letterItem = new ItemStack(Material.FILLED_MAP, 1);
         letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
+        MapMeta letterMeta = (MapMeta) letterItem.getItemMeta();
+        letterMeta.setMapId(plug.getCourierdb().getCourierMapId());
+        letterItem.setItemMeta(letterMeta);
     }
     
     static Postman create(Courier plug, Player p, int id) {

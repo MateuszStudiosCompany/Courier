@@ -17,13 +17,15 @@ public class EnderPostman extends Postman {
         postman = (Enderman) player.getWorld().spawnEntity(l, EntityType.ENDERMAN);
         // gah, item vs block ...
         // MaterialData material = new MaterialData(Material.PAPER);
-        ((Enderman)postman).setCarriedMaterial(new MaterialData(Material.BOOKSHELF));
+        ((Enderman)postman).setCarriedBlock(Material.BOOKSHELF.createBlockData());
         uuid = postman.getUniqueId();
+        postman.setCustomName("Postman");
+        postman.setCustomNameVisible(true);
     }
 
     @Override
     public void drop() {
-        ((Enderman)postman).setCarriedMaterial(new MaterialData(Material.AIR));
+        ((Enderman)postman).setCarriedBlock(Material.AIR.createBlockData());
         super.drop();
     }
 

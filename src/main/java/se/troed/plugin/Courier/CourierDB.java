@@ -46,13 +46,13 @@ public class CourierDB {
     private final Courier plugin;
     private YamlConfiguration mdb;
     
-    public CourierDB(Courier p) {
+    CourierDB(Courier p) {
         plugin = p;    
     }
 
     // reading the whole message db into memory, is that a real problem?
     // returns true if there already was a db
-    public boolean load() throws IOException {
+    boolean load() throws IOException {
         File db = new File(plugin.getDataFolder(), FILENAME);
         mdb = new YamlConfiguration();
         if(db.exists()) {
@@ -84,7 +84,7 @@ public class CourierDB {
     //
     // http://www.alanwood.net/demos/charsetdiffs.html - compares ansi, iso and macroman
     // NOTE: This method isn't pretty and should - really - be recoded.
-    YamlConfiguration loadNonUTFConfig(File db) {
+    private YamlConfiguration loadNonUTFConfig(File db) {
         InputStreamReader reader; 
         try {
             Charset cs;
@@ -139,7 +139,7 @@ public class CourierDB {
 
     // if filename == null, uses default
     // (this makes making backups really easy)
-    public boolean save(String filename) {
+    boolean save(String filename) {
         boolean ret = false;
         if(mdb != null) {
             File db = new File(plugin.getDataFolder(), filename != null ? filename : FILENAME);
@@ -179,14 +179,14 @@ public class CourierDB {
 
     // retrieves the version of our database format, -1 if it doesn't exist
     // 1 = v1.0.0
-    public int getDatabaseVersion() {
+    int getDatabaseVersion() {
         if(mdb == null) {
             return -1;
         }
         return mdb.getInt("courierdatabaseversion", -1);
     }
 
-    public void setDatabaseVersion(int v) {
+    void setDatabaseVersion(int v) {
         if(mdb == null) {
             return;
         }
@@ -194,21 +194,21 @@ public class CourierDB {
     }
 
     // retrieves what we think is our specially allocated Map
-    public short getCourierMapId() {
+    short getCourierMapId() {
         if(mdb == null) {
             return -1;
         }
         return (short)mdb.getInt("courierclaimedmap", -1);
     }
     
-    public void setCourierMapId(short mapId) {
+    void setCourierMapId(short mapId) {
         if(mdb == null) {
             return;
         }
         mdb.set("courierclaimedmap", (int)mapId);
     }
 
-    public boolean sendMessage(int id, String r, String s) {
+    boolean sendMessage(int id, String r, String s) {
         boolean ret = false;
         if(mdb == null || r == null || s == null) {
             return false;
@@ -230,7 +230,7 @@ public class CourierDB {
 
             List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
             if(messageids == null) {
-                messageids = new ArrayList<Integer>();
+                messageids = new ArrayList<>();
             }
             if(!messageids.contains(id)) { // I should move to a non-duplicate storage type .. 
                 messageids.add(id);
@@ -264,7 +264,7 @@ public class CourierDB {
         return ret;    
     }
 
-    public boolean storeMessage(int id, String s, String m, int d) {
+    boolean storeMessage(int id, String s, String m, int d) {
         if(mdb == null || s == null || m == null) {
             return false;
         }
@@ -275,7 +275,7 @@ public class CourierDB {
         // update messageids
         List<Integer> messageids = mdb.getIntegerList(skey + ".messageids");
         if(messageids == null) {
-            messageids = new ArrayList<Integer>();
+            messageids = new ArrayList<>();
         }
         if(!messageids.contains(id)) { // I should move to a non-duplicate storage type .. 
             messageids.add(id);
@@ -306,7 +306,7 @@ public class CourierDB {
 
     // this method is called when we detect a database version with case sensitive keys
     // it simply lowercases all Player name keys
-    public void keysToLower() {
+    void keysToLower() {
         if(mdb == null) {
             return;
         }
@@ -328,11 +328,11 @@ public class CourierDB {
                 boolean newmail = mdb.getBoolean(r + ".newmail");
                 List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
                 if(messageids == null) { // safety, should not happen in this case
-                    messageids = new ArrayList<Integer>();
+                    messageids = new ArrayList<>();
                 }
                 List<Integer> newMessageids = mdb.getIntegerList(rlower + ".messageids");
                 if(newMessageids == null) { // most likely, but who knows?
-                    newMessageids = new ArrayList<Integer>();
+                    newMessageids = new ArrayList<>();
                 }
                 for(Integer id : messageids) {
                     // fetch a message
@@ -362,7 +362,7 @@ public class CourierDB {
     }
     
     // used for legacy Letter conversion only
-    public boolean storeDate(int id, int d) {
+    boolean storeDate(int id, int d) {
         if(mdb == null) {
             return false;
         }
@@ -377,7 +377,7 @@ public class CourierDB {
     }
     
     // currently used for legacy Letter conversion only, but it is generalized
-    public void changeId(int oldid, int newid) {
+    void changeId(int oldid, int newid) {
         if(mdb == null) {
             return;
         }
@@ -391,7 +391,7 @@ public class CourierDB {
         
         List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
         if(messageids == null) { // safety, should not happen in this case
-            messageids = new ArrayList<Integer>();
+            messageids = new ArrayList<>();
         }
         messageids.add(newid);
         // "atomic" add
@@ -408,7 +408,7 @@ public class CourierDB {
         mdb.set(r + "." + String.valueOf(oldid), null);
     }
 
-    public boolean undeliveredMail(String r) {
+    boolean undeliveredMail(String r) {
         //noinspection SimplifiableIfStatement
         if(mdb == null || r == null) {
             return false;
@@ -421,7 +421,7 @@ public class CourierDB {
 
     // runs through messageids, sets all unread messages to undelivered
     // returns false when there are no unread messages
-    public boolean deliverUnreadMessages(String r) {
+    boolean deliverUnreadMessages(String r) {
         if(mdb == null || r == null) {
             return false;
         }
@@ -468,7 +468,7 @@ public class CourierDB {
 
     // runs through messageids, finds a message not delivered and returns the corresponding id
     // returns -1 on failure
-    public int undeliveredMessageId(String r) {
+    int undeliveredMessageId(String r) {
         if(mdb == null || r == null) {
             return -1;
         }
@@ -491,7 +491,7 @@ public class CourierDB {
     }
 
     // removes a single Letter from the database
-    public boolean deleteMessage(short id) {
+    boolean deleteMessage(short id) {
         if(id == -1 || mdb == null) {
             return false;
         }
@@ -503,7 +503,7 @@ public class CourierDB {
 
         List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
         if(messageids == null) { // safety, should not happen in this case
-            messageids = new ArrayList<Integer>();
+            messageids = new ArrayList<>();
         }
 
         // "atomic" remove
@@ -520,7 +520,7 @@ public class CourierDB {
     // does this id exist in the database
     // todo: horribly inefficient compared to just calling getPlayer() - due to using YAML instead of SQLite
     //       in this mergeback from the v1.2.0 branch
-    public boolean isValid(int id) {
+    boolean isValid(int id) {
         if(id == -1 || mdb == null) {
             return false;
         }
@@ -537,7 +537,7 @@ public class CourierDB {
     }
 
     // finds a specific messageid and returns associated player
-    public String getPlayer(int id) {
+    String getPlayer(int id) {
         if(id == -1 || mdb == null) {
             return null;
         }
@@ -552,7 +552,7 @@ public class CourierDB {
         return null;
     }
     
-    public String getSender(String r, int id) {
+    String getSender(String r, int id) {
         if(mdb == null || r == null) {
             return null;
         }
@@ -562,7 +562,7 @@ public class CourierDB {
         return mdb.getString(r + "." + String.valueOf(id) + ".sender");
     }
     
-    public String getMessage(String r, int id) {
+    String getMessage(String r, int id) {
         if(mdb == null || r == null) {
             return null;
         }
@@ -572,7 +572,7 @@ public class CourierDB {
         return mdb.getString(r + "." + String.valueOf(id) + ".message");
     }
 
-    public boolean getDelivered(String r, int id) {
+    private boolean getDelivered(String r, int id) {
         //noinspection SimplifiableIfStatement
         if(mdb == null || r == null || id==-1) {
             return false;
@@ -585,7 +585,7 @@ public class CourierDB {
 
     // unexpected side effect, we end up here if player1 takes a message intended for player2
     // exploit or remove logging of it?
-    public boolean setDelivered(String r, int id) {
+    boolean setDelivered(String r, int id) {
         if(mdb == null || r == null || id==-1) {
             return false;
         }
@@ -597,7 +597,7 @@ public class CourierDB {
         return true;
     }
 
-    public int getDate(String r, int id) {
+    int getDate(String r, int id) {
         if(mdb == null || r == null) {
             return -1;
         }
@@ -607,7 +607,7 @@ public class CourierDB {
         return mdb.getInt(r + "." + String.valueOf(id) + ".date");
     }
 
-    public boolean getRead(String r, int id) {
+    boolean getRead(String r, int id) {
         //noinspection SimplifiableIfStatement
         if(mdb == null || r == null || id==-1) {
             return false;
@@ -618,7 +618,7 @@ public class CourierDB {
         return mdb.getBoolean(r + "." + String.valueOf(id) + ".read");
     }
 
-    public boolean setRead(String r, int id) {
+    boolean setRead(String r, int id) {
         if(mdb == null || r == null || id==-1) {
             return false;
         }
@@ -632,11 +632,11 @@ public class CourierDB {
     // returns the first available id, or -1 when we're fatally out of them (or db error .. hmm)
     // expected to be called seldom (at letter creation) and is allowed to be slow
     // obvious caching/persisting of TreeSet possible
-    public int generateUID() {
+    int generateUID() {
         if(mdb == null) {
             return -1;
         }
-        TreeSet<Integer> sortedSet = new TreeSet<Integer>();
+        TreeSet<Integer> sortedSet = new TreeSet<>();
         Set<String> players = mdb.getKeys(false);
         for (String player : players) {
             List<Integer> messageids = mdb.getIntegerList(player + ".messageids");

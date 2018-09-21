@@ -148,11 +148,7 @@ public class Tracker {
             plugin.getCConfig().clog(Level.FINE, "Cancel existing despawn on Postman " + uuid);
             plugin.getServer().getScheduler().cancelTask(postmen.get(uuid).getTaskId());
         }
-        runnable = new Runnable() {
-            public void run() {
-                despawnPostman(uuid);
-            }
-        };
+        runnable = () -> despawnPostman(uuid);
         postmen.get(uuid).setRunnable(runnable);
         // in ticks. one tick = 50ms
         plugin.getCConfig().clog(Level.FINE, "Scheduled " + time + " second despawn for Postman " + uuid);

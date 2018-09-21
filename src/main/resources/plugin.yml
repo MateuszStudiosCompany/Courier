@@ -6,6 +6,7 @@ description: Item based Player to Player realistically rendered mail
 website: http://dev.bukkit.org/server-mods/courier/
 softdepend: [Vault]
 load: STARTUP
+api-version: 1.13
 commands:
   postman:
     description: Spawns a postman

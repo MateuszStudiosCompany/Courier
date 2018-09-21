@@ -4,10 +4,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.map.*;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.logging.Level;
+
+import static java.util.logging.Level.INFO;
 
 public class FramedLetterRenderer extends MapRenderer {
 
@@ -30,8 +36,29 @@ public class FramedLetterRenderer extends MapRenderer {
 
         if (clearImage == null) {
             try {
-                InputStream is = plugin.getClass().getResourceAsStream("/framed.png");
+                InputStream is = plugin.getClass().getResourceAsStream("framed.png");
                 if (is != null) {
+                    plugin.getCConfig().clog(Level.FINE, "IS not null");
+                    ImageInputStream iis = ImageIO.createImageInputStream(is);
+                    if (iis != null) {
+                        plugin.getCConfig().clog(Level.FINE, "IIS not null");
+                        Iterator iter = ImageIO.getImageReaders(iis);
+                        if (iter.hasNext()) {
+                            plugin.getCConfig().clog(Level.FINE, "reader found");
+                            ImageReader reader = (ImageReader)iter.next();
+                            ImageReadParam param = reader.getDefaultReadParam();
+                            reader.setInput(iis, true, true);
+                            try
+                            {
+                                framed = reader.read(0, param);
+                                plugin.getCConfig().clog(Level.FINE, "read image maybe");
+                            } finally {
+                                reader.dispose();
+                            }
+                        }
+
+                        iis.close();
+                    }
                     framed = ImageIO.read(is);
                     is.close();
                 }
@@ -44,6 +71,7 @@ public class FramedLetterRenderer extends MapRenderer {
                 clearImage = MapPalette.imageToBytes(framed);
             } else {
                 clearImage = new byte[128 * 128];
+                plugin.getCConfig().clog(Level.FINE, "framed.png not read");
             }
         }
     }
@@ -61,9 +89,9 @@ public class FramedLetterRenderer extends MapRenderer {
                 plugin.getCConfig().clog(Level.FINE, "Rendering a Courier ItemFrame Letter (" + letter.getId() + ") on Map (" + map.getId() + ")");
                 for (int j = 0; j < CANVAS_HEIGHT; j++) {
                     for (int i = 0; i < CANVAS_WIDTH; i++) {
-                        canvas.setPixel(i, j, clearImage[j * 128 + i]);
-//                        canvas.setPixel(i, j, MapPalette.TRANSPARENT);
-//                        canvas.setPixel(i, j, MapPalette.LIGHT_BROWN);
+                        //canvas.setPixel(i, j, clearImage[j * 128 + i]);
+                        //canvas.setPixel(i, j, MapPalette.TRANSPARENT);
+                        canvas.setPixel(i, j, MapPalette.LIGHT_BROWN);
                     }
                 }
 

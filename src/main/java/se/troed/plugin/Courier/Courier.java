@@ -23,6 +23,7 @@ import org.bukkit.Difficulty;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
@@ -38,9 +39,9 @@ import org.bukkit.inventory.FurnaceRecipe;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapelessRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -115,8 +116,8 @@ public class Courier extends JavaPlugin {
     // Should be used in many more places than it is currently
     // Valid for Enchanted Courier Letters, Blank Courier Parchments && Framed Letters
     int courierMapType(ItemStack item) {
-        if(item != null && item.getType() == Material.MAP) {
-            MapView map = getServer().getMap(item.getDurability());
+        if(item != null && item.getType() == Material.FILLED_MAP) {
+            MapView map = getServer().getMap((short) ((MapMeta) item.getItemMeta()).getMapId());
             if(map != null && map.getCenterX() == Courier.MAGIC_NUMBER) {
                 if(map.getId() == getCourierdb().getCourierMapId()) {
                     if(item.containsEnchantment(Enchantment.DURABILITY)) { // && level > 0
@@ -577,19 +578,22 @@ public class Courier extends JavaPlugin {
         // oops, not allowed to have Material.AIR as the result .. (NPE) .. working around this in the event listener
         // https://bukkit.atlassian.net/browse/BUKKIT-745
         if(!abort) {
-            FurnaceRecipe rec = new FurnaceRecipe(new ItemStack(Material.MAP), Material.MAP);
+
+            FurnaceRecipe rec = new FurnaceRecipe(new NamespacedKey(this, "letterburn"),
+                    new ItemStack(Material.MAP), Material.MAP, 0, 200);
             getServer().addRecipe(rec);
         }
 
         if(!abort && config.getRequiresCrafting()) {
             config.clog(Level.FINE, "Crafting recipe required");
-            ItemStack item = new ItemStack(Material.MAP, 1, getCourierdb().getCourierMapId());
+            ItemStack item = new ItemStack(Material.FILLED_MAP, 1);
             ItemMeta meta = item.getItemMeta();
             if(meta != null) {
                 meta.setDisplayName(config.getParchmentDisplayName());
+                ((MapMeta) meta).setMapId(getCourierdb().getCourierMapId());
                 item.setItemMeta(meta);
             }
-            ShapelessRecipe recipe = new ShapelessRecipe(item);
+            ShapelessRecipe recipe = new ShapelessRecipe(new NamespacedKey(this, "lettercraft"), item);
             for(ItemStack resource : config.getLetterResources()) {
                 config.clog(Level.FINE, "Crafting recipe adding: " + resource.getAmount() + " x " + resource.getType());
                 recipe.addIngredient(resource.getAmount(), resource.getType());
@@ -602,7 +606,7 @@ public class Courier extends JavaPlugin {
             config.clog(Level.INFO, pdfFile.getName() + " version v" + pdfFile.getVersion() + " is enabled!");
 
             // launch our background thread checking for Courier updates
-            startUpdateThread();
+            // startUpdateThread();
         } else {
             config.clog(Level.INFO, pdfFile.getName() + " version v" + pdfFile.getVersion() + " has been disabled!");
             setEnabled(false);

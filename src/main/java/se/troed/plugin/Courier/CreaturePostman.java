@@ -24,6 +24,8 @@ public class CreaturePostman extends Postman {
             postman.setTarget(player);
         }
         uuid = postman.getUniqueId();
+        postman.setCustomName("Postman");
+        postman.setCustomNameVisible(true);
     }
 
     @Override

@@ -35,7 +35,7 @@ public class LetterRenderer extends MapRenderer {
     @Override
     public void render(MapView map, MapCanvas canvas, Player player) {
         Letter letter = null;
-        ItemStack item = player.getItemInHand();
+        ItemStack item = player.getEquipment().getItemInMainHand();
         if(plugin.courierMapType(item) != Courier.NONE) {
             letter = plugin.getTracker().getLetter(item);
             if(letter == null) { // plugin.courierMapType(item) != Courier.LETTER
@@ -45,7 +45,7 @@ public class LetterRenderer extends MapRenderer {
                 for(int j = 0; j < CANVAS_HEIGHT; j++) {
                     for(int i = 0; i < CANVAS_WIDTH; i++) {
                         //                    canvas.setPixel(i, j, clearImage[j*128+i]);
-                        canvas.setPixel(i, j, MapPalette.TRANSPARENT);
+                        canvas.setPixel(i, j, MapPalette.LIGHT_BROWN);
                     }
                 }
             } else if(letter.getDirty()) {
@@ -53,7 +53,7 @@ public class LetterRenderer extends MapRenderer {
                 for(int j = 0; j < CANVAS_HEIGHT; j++) {
                     for(int i = 0; i < CANVAS_WIDTH; i++) {
                         //                    canvas.setPixel(i, j, clearImage[j*128+i]);
-                        canvas.setPixel(i, j, MapPalette.TRANSPARENT);
+                        canvas.setPixel(i, j, MapPalette.LIGHT_BROWN);
                     }
                 }
                 // todo: idea for pvp war servers: "your mail has fallen into enemy hands". "they've read it!")

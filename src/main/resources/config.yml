@@ -20,7 +20,7 @@ Courier:
     SealedEnvelope: true
     Locked: "&0Sorry, only&2 %s\n&0can read this letter"
   Postman:
-    Type: 'Enderman'
+    Type: 'ENDERMAN'
     QuickDespawn: 3
     Despawn: 20
     SpawnDistance: 10

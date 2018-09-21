@@ -222,9 +222,9 @@ public class Letter {
     // splits and newlines a String to fit MapCanvas width
     // returns a list of pages
     private List<String> format(String s) {
-        ArrayList<String> words = new ArrayList<String>();
+        ArrayList<String> words = new ArrayList<>();
         Collections.addAll(words, s.split("\\s+"));
-        ArrayList<String> pages = new ArrayList<String>();
+        ArrayList<String> pages = new ArrayList<>();
         StringBuilder buffer = new StringBuilder();
         int height = 0;
         int page = 0; // our current page

@@ -10,12 +10,14 @@ import org.bukkit.entity.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapView;
 import org.bukkit.map.MinecraftFont;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -147,7 +149,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
         boolean ret = false;
         ItemStack item = player.getItemInHand();
         Letter letter = null;
-        if(item != null && item.getType() == Material.MAP) {
+        if(item != null && item.getType() == Material.FILLED_MAP) {
             letter = tracker.getLetter(item);
         }
         if(letter != null) {
@@ -214,7 +216,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                     if(plugin.getEconomy() != null && !player.hasPermission(Courier.PM_THEONEPERCENT)) {
                         // withdraw postage fee
                         double fee = plugin.getCConfig().getFeeSend();
-                        EconomyResponse er = plugin.getEconomy().withdrawPlayer(player.getName(), fee);
+                        EconomyResponse er = plugin.getEconomy().withdrawPlayer(player, fee);
                         if(er.transactionSuccess()) {
                             Courier.display(player, plugin.getCConfig().getPostLetterSentFee(p.getName(), plugin.getEconomy().format(fee)));
                             send = true;
@@ -225,19 +227,36 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                         // add postage fee to bank account if one has been configured
                         // allows both bank accounts and player accounts
                         String account = plugin.getCConfig().getBankAccount();
+
                         if(account != null && !account.isEmpty() && !account.equalsIgnoreCase("<none>")) {
-                            if(plugin.getEconomy().getBanks().contains(account)) {
-                                // named Bank Account exists
-                                er = plugin.getEconomy().bankDeposit(account, fee);
-                                plugin.getCConfig().clog(Level.FINE, "Depositing fee into bank account " + account);
-                            } else if (plugin.getEconomy().hasAccount(account)) {
-                                // it's a Player
-                                er = plugin.getEconomy().depositPlayer(account, fee);
-                                plugin.getCConfig().clog(Level.FINE, "Depositing fee into player account " + account);
-                            } else {
-                                // config is in error
-                                plugin.getCConfig().clog(Level.WARNING, "Configured Post office account " + account + " does not exist.");
+
+                            try {
+                                UUID uuid = UUID.fromString(account);
+                                OfflinePlayer acc = plugin.getServer().getOfflinePlayer(uuid);
+
+                                if (plugin.getEconomy().hasAccount(acc))
+                                {
+                                    // it's a Player
+                                    er = plugin.getEconomy().depositPlayer(acc, fee);
+                                    plugin.getCConfig().clog(Level.FINE, "Depositing fee into player account " + account);
+                                } else
+                                {
+                                    // config is in error
+                                    plugin.getCConfig().clog(Level.WARNING, "Configured Post office account " + account + " does not exist.");
+                                }
+                            } catch (IllegalArgumentException iae)
+                            {
+                                if(plugin.getEconomy().getBanks().contains(account)) {
+                                    // named Bank Account exists
+                                    er = plugin.getEconomy().bankDeposit(account, fee);
+                                    plugin.getCConfig().clog(Level.FINE, "Depositing fee into bank account " + account);
+                                } else
+                                {
+                                    // config is in error
+                                    plugin.getCConfig().clog(Level.WARNING, "Configured Post office account " + account + " does not exist.");
+                                }
                             }
+
                             if(!er.transactionSuccess()) {
                                 plugin.getCConfig().clog(Level.WARNING, "Could not add postage fee to configured account: " + account);
                             }
@@ -256,7 +275,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                             // remove item from hands, which kills the ItemStack association. It's now "gone"
                             // from the control of this player. (if I implement additional receivers you could of course
                             //  cc: yourself)
-                            player.setItemInHand(null);
+                            player.getEquipment().setItemInMainHand(null);
                         } else {
                             plugin.getCConfig().clog(Level.WARNING, "Could not send message with ID: " + letter.getId());
                         }
@@ -286,7 +305,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
         // letter message - builds upon message in hand
         boolean ret = false;
         try {
-            ItemStack item = player.getItemInHand();
+            ItemStack item = player.getEquipment().getItemInMainHand();
             Letter letter = null;
             boolean crafted = false;
             if(item != null) {
@@ -371,7 +390,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
         
                         // no letter == we create and put in hands, or in inventory, or drop to ground
                         if(letter == null) {
-                            ItemStack letterItem = new ItemStack(Material.MAP, 1, plugin.getCourierdb().getCourierMapId());
+                            ItemStack letterItem = new ItemStack(Material.FILLED_MAP, 1);
                             letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
                             letter = tracker.getLetter(letterItem);
                             // also see similar Lore code in CourierEventListener
@@ -381,6 +400,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                                 List<String> strings = new ArrayList<String>();
                                 strings.add(letter.getTopRow());
                                 meta.setLore(strings);
+								((MapMeta) meta).setMapId(plugin.getCourierdb().getCourierMapId());
                                 letterItem.setItemMeta(meta);
                             } else {
                                 // ???
@@ -395,7 +415,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                             if((item == null || item.getAmount() == 0) ||
                                     (crafted && item.getAmount() == 1 && plugin.courierMapType(item) == Courier.PARCHMENT)) {
                                 plugin.getCConfig().clog(Level.FINE, "Letter delivered into player's hands");
-                                player.setItemInHand(letterItem); // REALLY replaces what's there
+                                player.getEquipment().setItemInMainHand(letterItem); // REALLY replaces what's there
 
                                 // quick render
                                 letter.setDirty(true);
@@ -404,7 +424,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                                 if(crafted && plugin.courierMapType(item) == Courier.PARCHMENT) {
                                     // subtract one parchment
                                     item.setAmount(item.getAmount()-1);
-                                    player.setItemInHand(item);
+                                    player.getEquipment().setItemInMainHand(item);
                                 }
                                 plugin.getCConfig().clog(Level.FINE, "Player hands not empty");
                                 HashMap<Integer, ItemStack> items = player.getInventory().addItem(letterItem);

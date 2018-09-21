@@ -17,6 +17,7 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.material.MaterialData;
@@ -154,7 +155,7 @@ class CourierEventListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerInteractEntity(PlayerInteractEntityEvent e) {
-        ItemStack item = e.getPlayer().getItemInHand();
+        ItemStack item = e.getPlayer().getEquipment().getItemInMainHand();
 
         // Did we put a map into an ItemFrame?
         if(e.getRightClicked().getType() == EntityType.ITEM_FRAME) {
@@ -178,7 +179,7 @@ class CourierEventListener implements Listener {
                             newMap.removeRenderer(r);
                         }
                         newMap.addRenderer(new FramedLetterRenderer(plugin));
-                        ItemStack mapItem = new ItemStack(Material.MAP, 1, newMap.getId());
+                        ItemStack mapItem = new ItemStack(Material.FILLED_MAP, 1);
                         // Copy the same Enchantment level (our database lookup key) to the new ItemStack
                         mapItem.addUnsafeEnchantment(Enchantment.DURABILITY, item.getEnchantmentLevel(Enchantment.DURABILITY));
 
@@ -191,9 +192,10 @@ class CourierEventListener implements Listener {
                             }
                             strings.add(letter.getCurPage() + "/" + letter.getPageCount());
                             meta.setLore(strings);
+                            ((MapMeta) meta).setMapId(newMap.getId());
                             mapItem.setItemMeta(meta);
                         }
-                        e.getPlayer().setItemInHand(mapItem); // Replace the Courier Letter the player had with the new unique Map
+                        e.getPlayer().getEquipment().setItemInMainHand(mapItem); // Replace the Courier Letter the player had with the new unique Map
                         //noinspection ConstantConditions
                         letter.setDirty(true);
                     } else if(type == Courier.FRAMEDLETTER) {
@@ -240,13 +242,13 @@ class CourierEventListener implements Listener {
                 }
             } else {
                 plugin.getCConfig().clog(Level.FINE, "Letter delivered into player's hands");
-                e.getPlayer().setItemInHand(letter); // REALLY replaces what's there
+                e.getPlayer().getEquipment().setItemInMainHand(letter); // REALLY replaces what's there
 
                 // todo: quick render
                 e.getPlayer().sendMap(plugin.getServer().getMap(plugin.getCourierdb().getCourierMapId()));
 
                 if(e.getRightClicked() instanceof Enderman) {
-                    ((Enderman)e.getRightClicked()).setCarriedMaterial(new MaterialData(Material.AIR));
+                    ((Enderman)e.getRightClicked()).setCarriedBlock(Material.AIR.createBlockData());
                 } else {
                     ((Creature) e.getRightClicked()).setTarget(null);
                 }
@@ -284,9 +286,12 @@ class CourierEventListener implements Listener {
             plugin.getCConfig().clog(Level.FINE, "Converting unique Courier Letter id " + id);
         }
         // convert old Courier Letter into new
-        ItemStack letterItem = new ItemStack(Material.MAP, 1, plugin.getCourierdb().getCourierMapId());
+        ItemStack letterItem = new ItemStack(Material.FILLED_MAP, 1);
         // I can trust this id to stay the same thanks to how we handle it in CourierDB
         letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
+        MapMeta letterMeta = (MapMeta) letterItem.getItemMeta();
+        letterMeta.setMapId(plugin.getCourierdb().getCourierMapId());
+        letterItem.setItemMeta(letterMeta);
         return letterItem;
     }
 
@@ -322,9 +327,9 @@ class CourierEventListener implements Listener {
     public void onItemHeldChange(PlayerItemHeldEvent e) {
         // http://dev.bukkit.org/server-mods/courier/tickets/36-severe-could-not-pass-event-player-item-held-event/
         ItemStack item = e.getPlayer().getInventory().getItem(e.getNewSlot());
-        if(item != null && item.getType() == Material.MAP) {
+        if(item != null && item.getType() == Material.FILLED_MAP) {
             // convert legacy and ItemFrame maps
-            MapView map = plugin.getServer().getMap(item.getDurability());
+            MapView map = plugin.getServer().getMap((short) ((MapMeta) item.getItemMeta()).getMapId());
             if(map.getCenterX() == Courier.MAGIC_NUMBER && map.getId() != plugin.getCourierdb().getCourierMapId()) {
                 ItemStack letterItem = null;
                 if(item.containsEnchantment(Enchantment.DURABILITY)) {
@@ -334,7 +339,7 @@ class CourierEventListener implements Listener {
                     letterItem = convertMap(id);
                 } else {
                     // legacy Courier map from pre v1.0.0 days
-                    int id = item.getDurability();
+                    int id = ((MapMeta)item.getItemMeta()).getMapId();
                     plugin.getCConfig().clog(Level.FINE, "Converting legacy Courier Letter id " + id);
                     letterItem = convertLegacyMap(id, map);
                 }
@@ -342,6 +347,12 @@ class CourierEventListener implements Listener {
                 if(letterItem != null) {
                     item = letterItem;
                 }
+                // switch back to non-framed rendered
+                List<MapRenderer> renderers = map.getRenderers();
+                for(MapRenderer r : renderers) { // remove existing renderers
+                    map.removeRenderer(r);
+                }
+                map.addRenderer(new LetterRenderer(plugin));
             }
             // conversion end
             Letter letter = tracker.getLetter(item);
@@ -363,11 +374,12 @@ class CourierEventListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
-    public void onPlayerPickupItem(PlayerPickupItemEvent e) {
-        if(!e.isCancelled() && e.getItem().getItemStack().getType() == Material.MAP) {
+    public void onPlayerPickupItem(EntityPickupItemEvent e) {
+        if(!e.isCancelled() && e.getEntity().getType() == EntityType.PLAYER
+                && e.getItem().getItemStack().getType() == Material.FILLED_MAP) {
             // convert legacy and ItemFrame maps
             ItemStack item = e.getItem().getItemStack();
-            MapView map = plugin.getServer().getMap(item.getDurability());
+            MapView map = plugin.getServer().getMap((short) ((MapMeta) item.getItemMeta()).getMapId());
             if(map.getCenterX() == Courier.MAGIC_NUMBER && map.getId() != plugin.getCourierdb().getCourierMapId()) {
                 ItemStack letterItem = null;
                 if(item.containsEnchantment(Enchantment.DURABILITY)) {
@@ -376,13 +388,19 @@ class CourierEventListener implements Listener {
                     letterItem = convertMap(id);
                 } else {
                     // legacy Courier map from pre v1.0.0 days
-                    int id = item.getDurability();
+                    int id = (short) ((MapMeta) item.getItemMeta()).getMapId();
                     letterItem = convertLegacyMap(id, map);
                 }
                 // replacing under the hood
                 if(letterItem != null) {
                     item = letterItem;
                 }
+                // switch back to non-framed rendered
+                List<MapRenderer> renderers = map.getRenderers();
+                for(MapRenderer r : renderers) { // remove existing renderers
+                    map.removeRenderer(r);
+                }
+                map.addRenderer(new LetterRenderer(plugin));
             }
             // conversion end
             Letter letter = tracker.getAndRemoveDrop(e.getItem().getUniqueId());
@@ -392,17 +410,17 @@ class CourierEventListener implements Listener {
             }
             letter = tracker.getLetter(item);
             if(letter != null) {
-                e.getItem().setItemStack(updateLore(item, letter, e.getPlayer()));
+                e.getItem().setItemStack(updateLore(item, letter, (Player) e.getEntity()));
                 // todo: need to updateInventory for lore to be reflected correctly on picked up Framed Letters?
 
                 plugin.getCConfig().clog(Level.FINE, "Letter " + letter.getId() + " picked up.");
 
                 // delivered
-                CourierDeliveryEvent event = new CourierDeliveryEvent(e.getPlayer(), letter.getId());
+                CourierDeliveryEvent event = new CourierDeliveryEvent((Player) e.getEntity(), letter.getId());
                 plugin.getServer().getPluginManager().callEvent(event);
 
                 // if itemheldhand was empty, we should render the letter immediately
-                ItemStack heldItem = e.getPlayer().getItemInHand();
+                ItemStack heldItem = e.getEntity().getEquipment().getItemInMainHand();
                 if(heldItem != null && heldItem.getAmount() == 0) {
                     letter.setDirty(true);
                 }
@@ -428,7 +446,7 @@ class CourierEventListener implements Listener {
             if(entity instanceof ItemFrame) {
                 ItemStack item = ((ItemFrame)entity).getItem();
                 if(plugin.courierMapType(item) == Courier.FRAMEDLETTER) {
-                    MapView map = plugin.getServer().getMap(item.getDurability());
+                    MapView map = plugin.getServer().getMap((short) ((MapMeta) item.getItemMeta()).getMapId());
                     if(item.hasItemMeta() && item.getItemMeta().hasLore()) {
                         // Lore
                         ItemMeta meta = item.getItemMeta();

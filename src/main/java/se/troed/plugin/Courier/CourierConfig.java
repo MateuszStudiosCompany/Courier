@@ -5,7 +5,6 @@ import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapPalette;
-import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.PluginDescriptionFile;
 
 
@@ -97,12 +96,12 @@ public class CourierConfig {
     private final boolean showDate;
     private final boolean walkToPlayer;
     private final boolean freeLetter;
-    private final List<ItemStack> letterStacks = new ArrayList<ItemStack>();
-    private EntityType type = null;
+    private final List<ItemStack> letterStacks = new ArrayList<>();
+    private EntityType type;
 
     private final String version;
     
-    public CourierConfig(Courier plug) {
+    CourierConfig(Courier plug) {
 
         log = plug.getServer().getLogger();
 
@@ -134,13 +133,15 @@ public class CourierConfig {
         walkToPlayer = config.getBoolean(ROUTE_WALKTOPLAYER, true); // added in 1.1.0
         clog(Level.FINE, ROUTE_WALKTOPLAYER + ": " + walkToPlayer);
 
-        String stype = config.getString(POSTMAN_TYPE, "Enderman"); // added in 1.1.0
-        type = EntityType.fromName(stype);
-        if(type == null) {
+        String stype = config.getString(POSTMAN_TYPE, "ENDERMAN"); // added in 1.1.0
+        try {
+            type = EntityType.valueOf(stype);
+        } catch (IllegalArgumentException etiae)
+        {
             type = EntityType.ENDERMAN;
             clog(Level.WARNING, "Postman.Type: " + stype + " is not a valid Creature, using default.");
         }
-        clog(Level.FINE, POSTMAN_TYPE + ": " + type.getName());
+        clog(Level.FINE, POSTMAN_TYPE + ": " + type.name());
 
         spawnDistance = config.getInt(POSTMAN_SPAWNDISTANCE);
         clog(Level.FINE, POSTMAN_SPAWNDISTANCE + ": " + spawnDistance);
@@ -168,7 +169,7 @@ public class CourierConfig {
                     }
                     if(!added) {
                         // create new stack
-                        letterStacks.add(new MaterialData(material).toItemStack(1));
+                        letterStacks.add(new ItemStack(material, 1));
                     }
                 } else {
                     clog(Level.WARNING, "Cannot parse \'" + resource + "\' into a valid Minecraft resource! Skipped.");
@@ -185,31 +186,31 @@ public class CourierConfig {
         return version;
     }
     
-    public int getUpdateInterval() {
+    int getUpdateInterval() {
         return updateInterval;
     }
 
-    public boolean getUseFees() {
+    boolean getUseFees() {
         return useFees;
     }
 
-    public int getQuickDespawnTime() {
+    int getQuickDespawnTime() {
         return quickDespawnTime;
     }
 
-    public int getDespawnTime() {
+    int getDespawnTime() {
         return despawnTime;
     }
 
-    public int getInitialWait() {
+    int getInitialWait() {
         return initialWait;
     }
 
-    public int getNextRoute() {
+    int getNextRoute() {
         return nextRoute;
     }
 
-    public boolean getWalkToPlayer() {
+    boolean getWalkToPlayer() {
         return walkToPlayer;
     }
 
@@ -217,63 +218,63 @@ public class CourierConfig {
         return type;
     }
 
-    public int getSpawnDistance() {
+    int getSpawnDistance() {
         return spawnDistance;
     }
 
-    public boolean getShowDate() {
+    boolean getShowDate() {
         return showDate;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean getFreeLetter() {
+    boolean getFreeLetter() {
         return freeLetter;
     }
 
-    public List<ItemStack> getLetterResources() {
+    List<ItemStack> getLetterResources() {
         return letterStacks;
     }
 
-    public boolean getRequiresCrafting() {
+    boolean getRequiresCrafting() {
         return config.getBoolean(LETTER_REQUIRESCRAFTING, false);
     }
 
-    public boolean getBreakSpawnProtection() {
+    boolean getBreakSpawnProtection() {
         return breakSpawnProtection;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean getSealedEnvelope() {
+    boolean getSealedEnvelope() {
         return sealedEnvelope;
     }
 
-    public boolean getLetterFrameable() {
+    boolean getLetterFrameable() {
         return config.getBoolean(LETTER_FRAMEABLE, true);
     }
 
-    public boolean getCreativeDelivery() {
+    boolean getCreativeDelivery() {
         return config.getBoolean(POSTMAN_CREATIVEDELIVERY, false);
     }
 
-    public String getBankAccount() {
+    String getBankAccount() {
         return config.getString(FEE_BANKACCOUNT, "");
     }
 
-    public Double getFeeSend() {
+    Double getFeeSend() {
         return feeSend;
     }
 
-    public int getVanishDistance() {
+    int getVanishDistance() {
         return config.getInt(POSTMAN_VANISHDISTANCE, 0);
     }
 
     // translatable strings
 
-    public String getGreeting() {
+    String getGreeting() {
         return colorize(config.getString(POSTMAN_GREETING, "")); // added in 0.9.1
     }
 
-    public String getMailDrop() {
+    String getMailDrop() {
         return colorize(config.getString(POSTMAN_MAILDROP, "")); // added in 0.9.1
     }
 
@@ -281,149 +282,149 @@ public class CourierConfig {
         return colorize(config.getString(POSTMAN_INVENTORY, "")); // added in 0.9.5
     }
 
-    public String getCannotDeliver() {
+    String getCannotDeliver() {
         return colorize(config.getString(POSTMAN_CANNOTDELIVER, "")); // added in 0.9.6
     }
 
-    public String getLetterDrop() {
+    String getLetterDrop() {
         return colorize(config.getString(LETTER_DROP, "")); // added in 0.9.10
     }
 
-    public String getLetterInventory() {
+    String getLetterInventory() {
         return colorize(config.getString(LETTER_INVENTORY, "")); // added in 0.9.10
     }
 
-    public String getInfoFee(String fee) {
+    String getInfoFee(String fee) {
         return String.format(colorize(config.getString(FEE_INFOFEE, "")), fee); // 1.1.0
     }
 
-    public String getInfoNoFee() {
+    String getInfoNoFee() {
         return colorize(config.getString(FEE_INFONOFEE, "")); // 1.1.0
     }
 
     // LetterRender colorization
-    public String getPrivacyLocked(String player) {
+    String getPrivacyLocked(String player) {
         return String.format(colorize2(config.getString(PRIVACY_LOCKED)), player); // 1.1.8
     }
 
-    public String getPostmanExtraDeliveries() {
+    String getPostmanExtraDeliveries() {
         return colorize(config.getString(POSTMAN_EXTRADELIVERIES, "")); // 1.1.0
     }
 
-    public String getPostmanNoUnreadMail() {
+    String getPostmanNoUnreadMail() {
         return colorize(config.getString(POSTMAN_NOUNREADMAIL, "")); // 1.1.0
     }
 
-    public String getPostNoCredit(String fee) {
+    String getPostNoCredit(String fee) {
         return String.format(colorize(config.getString(POST_NOCREDIT, "")), fee); // 1.1.0
     }
 
-    public String getPostNoRecipient() {
+    String getPostNoRecipient() {
         return colorize(config.getString(POST_NORECIPIENT, "")); // 1.1.0
     }
 
-    public String getPostDidYouMean(String input, String match) {
+    String getPostDidYouMean(String input, String match) {
         return String.format(colorize(config.getString(POST_DIDYOUMEAN, "")), input, match); // 1.1.0
     }
 
-    public String getPostDidYouMeanList(String input) {
+    String getPostDidYouMeanList(String input) {
         return String.format(colorize(config.getString(POST_DIDYOUMEANLIST, "")), input); // 1.1.0
     }
 
-    public String getPostDidYouMeanList2(String list) {
+    String getPostDidYouMeanList2(String list) {
         return String.format(colorize(config.getString(POST_DIDYOUMEANLIST2, "")), list); // 1.1.0
     }
 
-    public String getPostNoSuchPlayer(String input) {
+    String getPostNoSuchPlayer(String input) {
         return String.format(colorize(config.getString(POST_NOSUCHPLAYER, "")), input); // 1.1.0
     }
 
-    public String getPostLetterSent(String recipient) {
+    String getPostLetterSent(String recipient) {
         return String.format(colorize(config.getString(POST_LETTERSENT, "")), recipient); // 1.1.0
     }
 
-    public String getPostLetterSentFee(String recipient, String fee) {
+    String getPostLetterSentFee(String recipient, String fee) {
         return String.format(colorize(config.getString(POST_LETTERSENTFEE, "")), recipient, fee); // 1.1.0
     }
 
-    public String getPostFundProblem() {
+    String getPostFundProblem() {
         return colorize(config.getString(POST_FUNDPROBLEM, "")); // 1.1.0
     }
 
-    public String getPostNoLetter() {
+    String getPostNoLetter() {
         return colorize(config.getString(POST_NOLETTER, "")); // 1.1.0
     }
 
-    public String getLetterNoText() {
+    String getLetterNoText() {
         return colorize(config.getString(LETTER_NOTEXT, "")); // 1.1.0
     }
 
-    public String getLetterSkippedText() {
+    String getLetterSkippedText() {
         return colorize(config.getString(LETTER_SKIPPEDTEXT, "")); // 1.1.0
     }
 
-    public String getLetterCreateFailed() {
+    String getLetterCreateFailed() {
         return colorize(config.getString(LETTER_CREATEFAILED, "")); // 1.1.0
     }
 
-    public String getLetterNoMoreUIDs() {
+    String getLetterNoMoreUIDs() {
         return colorize(config.getString(LETTER_NOMOREUIDS, "")); // 1.1.0
     }
 
-    public String getLetterInfoCost(String resources) {
+    String getLetterInfoCost(String resources) {
         return String.format(colorize(config.getString(LETTER_INFOCOST, "")), resources); // 1.1.5
     }
 
-    public String getLetterInfoFree() {
+    String getLetterInfoFree() {
         return colorize(config.getString(LETTER_INFOFREE, "")); // 1.1.5
     }
 
-    public String getLetterLackingResources() {
+    String getLetterLackingResources() {
         return colorize(config.getString(LETTER_LACKINGRESOURCES, "")); // 1.1.5
     }
 
-    public String getLetterNoCraftedFound() {
+    String getLetterNoCraftedFound() {
         return colorize(config.getString(LETTER_NOCRAFTEDFOUND, "")); // 1.1.8
     }
 
     // Lore should not be colorized
-    public String getLetterDisplayName() {
+    String getLetterDisplayName() {
         return strip(config.getString(LETTER_DISPLAYNAME, "")); // 1.1.8
     }
 
     // Lore should not be colorized
-    public String getLetterFrom(String player) {
+    String getLetterFrom(String player) {
         return String.format(strip(config.getString(LETTER_FROM)), player); // 1.1.8
     }
 
     // LetterRenderer version
-    public String getLetterFrom2(String player) {
+    String getLetterFrom2(String player) {
         return String.format(colorize2(config.getString(LETTER_FROM)), player); // 1.1.8
     }
 
     // Lore should not be colorized
-    public String getLetterTo(String player) {
+    String getLetterTo(String player) {
         return String.format(strip(config.getString(LETTER_TO)), player); // 1.1.8
     }
 
     // Lore should not be colorized
-    public String getParchmentDisplayName() {
+    String getParchmentDisplayName() {
         return strip(config.getString(PARCHMENT_DISPLAYNAME, "")); // 1.1.8
     }
 
-    public String getInfoLine1() {
+    String getInfoLine1() {
         return colorize(config.getString(INFO_LINE1, "")); // 1.1.0
     }
 
-    public String getInfoLine2() {
+    String getInfoLine2() {
         return colorize(config.getString(INFO_LINE2, "")); // 1.1.0
     }
 
-    public String getInfoLine3() {
+    String getInfoLine3() {
         return colorize(config.getString(INFO_LINE3, "")); // 1.1.0
     }
 
-    public String getInfoLine4() {
+    String getInfoLine4() {
         return colorize(config.getString(INFO_LINE4, "")); // 1.1.0
     }
 
@@ -442,7 +443,7 @@ public class CourierConfig {
     // -1 version < compareVersion
     // 0 version equals compareVersion
     // 1 version > compareVersion
-    public int versionCompare(String version, String compareVersion) {
+    int versionCompare(String version, String compareVersion) {
         int major = 0;
         int minor = 0;
         int revision = 0;
@@ -497,11 +498,11 @@ public class CourierConfig {
 
     // credits: theguynextdoor - http://forums.bukkit.org/threads/adding-color-support.52980/#post-890244
     // see ChatColor.java for value validity
-    String colorize(String s) {
+    private String colorize(String s) {
         return s.replaceAll("(&(\\p{XDigit}))", "\u00A7$2");
     }
 
-    String strip(String s) {
+    private String strip(String s) {
 //        return s.replaceAll("(§(\\p{Digit}+);)", "");
         return s.replaceAll("(&(\\p{XDigit}))", "");
     }
@@ -511,7 +512,7 @@ public class CourierConfig {
     private byte[] colorCache = new byte[16];
     private boolean[] colorInited = new boolean[16];
 
-    byte convertToMapColor(byte color) {
+    private byte convertToMapColor(byte color) {
         if(color < 0 || color > 15) {
             clog(Level.FINE, "Out of bounds color value passed to convertToMapColor");
             return MapPalette.DARK_BROWN;
