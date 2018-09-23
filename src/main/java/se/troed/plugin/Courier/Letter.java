@@ -150,6 +150,10 @@ public class Letter {
         return message.get(currentPage);
     }
 
+    public String getMessage(int page) {
+        return message.get(page);
+    }
+
     // helper method used when adding Lore to Letter ItemStacks
     public String getTopRow() {
         return topRow != null ? topRow : "";

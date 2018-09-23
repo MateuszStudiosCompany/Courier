@@ -29,36 +29,18 @@ public class FramedLetterRenderer extends MapRenderer {
 //    private final byte[] clearImage = new byte[128*128];  // nice letter background image todo
     static byte[] clearImage = null;    // singleton
     BufferedImage framed = null;
+    boolean dirty = true;
+    int page;
 
-    public FramedLetterRenderer(Courier p) {
+    public FramedLetterRenderer(Courier p, int page) {
         super(false); // Framed Letters are not contextual (i.e same for all players)
         plugin = p;
+        this.page = page;
 
         if (clearImage == null) {
             try {
                 InputStream is = plugin.getClass().getResourceAsStream("framed.png");
                 if (is != null) {
-                    plugin.getCConfig().clog(Level.FINE, "IS not null");
-                    ImageInputStream iis = ImageIO.createImageInputStream(is);
-                    if (iis != null) {
-                        plugin.getCConfig().clog(Level.FINE, "IIS not null");
-                        Iterator iter = ImageIO.getImageReaders(iis);
-                        if (iter.hasNext()) {
-                            plugin.getCConfig().clog(Level.FINE, "reader found");
-                            ImageReader reader = (ImageReader)iter.next();
-                            ImageReadParam param = reader.getDefaultReadParam();
-                            reader.setInput(iis, true, true);
-                            try
-                            {
-                                framed = reader.read(0, param);
-                                plugin.getCConfig().clog(Level.FINE, "read image maybe");
-                            } finally {
-                                reader.dispose();
-                            }
-                        }
-
-                        iis.close();
-                    }
                     framed = ImageIO.read(is);
                     is.close();
                 }
@@ -67,7 +49,7 @@ public class FramedLetterRenderer extends MapRenderer {
                 e.printStackTrace();
             }
             if (framed != null) {
-                plugin.getCConfig().clog(Level.FINE, "framed.png found");
+                plugin.getCConfig().clog(Level.FINE, "framed.png found and read");
                 clearImage = MapPalette.imageToBytes(framed);
             } else {
                 clearImage = new byte[128 * 128];
@@ -85,7 +67,7 @@ public class FramedLetterRenderer extends MapRenderer {
             // it's a Courier map in an ItemFrame. We get called when it's in a loaded chunk. Player doesn't
             // even need to be near it. Performance issues galore ...
             Letter letter = plugin.getTracker().getLetter(map.getCenterZ());
-            if (letter != null && letter.getDirty()) {
+            if (letter != null && dirty) {
                 plugin.getCConfig().clog(Level.FINE, "Rendering a Courier ItemFrame Letter (" + letter.getId() + ") on Map (" + map.getId() + ")");
                 for (int j = 0; j < CANVAS_HEIGHT; j++) {
                     for (int i = 0; i < CANVAS_WIDTH; i++) {
@@ -107,10 +89,10 @@ public class FramedLetterRenderer extends MapRenderer {
                 canvas.drawText(letter.getLeftMarkerPos(), MinecraftFont.Font.getHeight(), MinecraftFont.Font, letter.getLeftMarker());
                 canvas.drawText(letter.getRightMarkerPos(), MinecraftFont.Font.getHeight(), MinecraftFont.Font, letter.getRightMarker());
 
-                if (letter.getMessage() != null) {
+                if (letter.getMessage(page) != null) {
                     canvas.drawText(0,
                             MinecraftFont.Font.getHeight() * drawPos,
-                            MinecraftFont.Font, Letter.MESSAGE_COLOR + letter.getMessage());
+                            MinecraftFont.Font, Letter.MESSAGE_COLOR + letter.getMessage(page));
                 }
 
                 if (letter.getDisplayDate() != null) {
@@ -119,6 +101,7 @@ public class FramedLetterRenderer extends MapRenderer {
                             MinecraftFont.Font, Letter.DATE_COLOR + letter.getDisplayDate());
                 }
                 letter.setDirty(false);
+                dirty = false;
                 player.sendMap(map);
             }
         }

@@ -1,5 +1,6 @@
 package se.troed.plugin.Courier;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -153,12 +154,18 @@ class CourierEventListener implements Listener {
         e.setCancelled(true);
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerInteractEntity(PlayerInteractEntityEvent e) {
         ItemStack item = e.getPlayer().getEquipment().getItemInMainHand();
 
         // Did we put a map into an ItemFrame?
         if(e.getRightClicked().getType() == EntityType.ITEM_FRAME) {
+
+            ItemFrame frame = (ItemFrame) e.getRightClicked();
+            if (frame.getItem() == null) {
+                return;
+            }
+
             // Is it a Letter?
             int type = plugin.courierMapType(item);
             if(type != Courier.NONE) {
@@ -178,7 +185,7 @@ class CourierEventListener implements Listener {
                         for(MapRenderer r : renderers) { // remove existing renderers
                             newMap.removeRenderer(r);
                         }
-                        newMap.addRenderer(new FramedLetterRenderer(plugin));
+                        newMap.addRenderer(new FramedLetterRenderer(plugin, letter.getCurPage() - 1));
                         ItemStack mapItem = new ItemStack(Material.FILLED_MAP, 1);
                         // Copy the same Enchantment level (our database lookup key) to the new ItemStack
                         mapItem.addUnsafeEnchantment(Enchantment.DURABILITY, item.getEnchantmentLevel(Enchantment.DURABILITY));
@@ -188,16 +195,19 @@ class CourierEventListener implements Listener {
                         if(meta != null && letter != null) {
                             List<String> strings = meta.getLore();
                             if(strings == null) {
-                                strings = new ArrayList<String>();
+                                strings = new ArrayList<>();
                             }
                             strings.add(letter.getCurPage() + "/" + letter.getPageCount());
                             meta.setLore(strings);
                             ((MapMeta) meta).setMapId(newMap.getId());
                             mapItem.setItemMeta(meta);
                         }
-                        e.getPlayer().getEquipment().setItemInMainHand(mapItem); // Replace the Courier Letter the player had with the new unique Map
+                        // e.getPlayer().getEquipment().setItemInMainHand(mapItem);
+                        // Replace the Courier Letter the player had with the new unique Map
+                        frame.setItem(mapItem);
+                        e.setCancelled(true);
                         //noinspection ConstantConditions
-                        letter.setDirty(true);
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> letter.setDirty(true), 20);
                     } else if(type == Courier.FRAMEDLETTER) {
                         // Probably never happens since we convert them back on pickup and heldchange into regular Courier Letters
                         plugin.getCConfig().clog(Level.FINE, "Courier Framed Letter placed into ItemFrame");
@@ -215,7 +225,7 @@ class CourierEventListener implements Listener {
 
         // Did we right click a Postman?
         Postman postman = tracker.getPostman(e.getRightClicked().getUniqueId());
-        if(!e.isCancelled() && !e.getRightClicked().isDead() && postman != null && !postman.scheduledForQuickRemoval()) {
+        if(!e.getRightClicked().isDead() && postman != null && !postman.scheduledForQuickRemoval()) {
             plugin.getCConfig().clog(Level.FINE, e.getPlayer().getDisplayName() + " receiving mail");
             ItemStack letter = postman.getLetterItem();
 
@@ -373,9 +383,9 @@ class CourierEventListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerPickupItem(EntityPickupItemEvent e) {
-        if(!e.isCancelled() && e.getEntity().getType() == EntityType.PLAYER
+        if(e.getEntity().getType() == EntityType.PLAYER
                 && e.getItem().getItemStack().getType() == Material.FILLED_MAP) {
             // convert legacy and ItemFrame maps
             ItemStack item = e.getItem().getItemStack();
@@ -447,10 +457,10 @@ class CourierEventListener implements Listener {
                 ItemStack item = ((ItemFrame)entity).getItem();
                 if(plugin.courierMapType(item) == Courier.FRAMEDLETTER) {
                     MapView map = plugin.getServer().getMap((short) ((MapMeta) item.getItemMeta()).getMapId());
+                    int page = 0;
                     if(item.hasItemMeta() && item.getItemMeta().hasLore()) {
                         // Lore
                         ItemMeta meta = item.getItemMeta();
-                        int page = 0;
                         ListIterator iter = meta.getLore().listIterator(meta.getLore().size());
                         while(iter.hasPrevious()) {
                             String[] strings = ((String)iter.previous()).split("/");
@@ -461,18 +471,18 @@ class CourierEventListener implements Listener {
                                 break;
                             }
                         }
-                        if(page > 0) {
+                        /*if(page > 0) {
                             Letter letter = tracker.getLetter(map.getCenterZ());
                             if(letter!=null) {
                                 letter.setCurPage(page);
                             }
-                        }
+                        }*/
                     }
                     List<MapRenderer> renderers = map.getRenderers();
                     for(MapRenderer r : renderers) { // remove existing renderers
                         map.removeRenderer(r);
                     }
-                    map.addRenderer(new FramedLetterRenderer(plugin));
+                    map.addRenderer(new FramedLetterRenderer(plugin, page - 1));
                     found++;
                 }
             }
@@ -514,10 +524,26 @@ class CourierEventListener implements Listener {
     }
 
     // don't allow players to attack postmen
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent e) {
+
+        if (e.getEntityType() == EntityType.ITEM_FRAME && e.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK) {
+            if (((EntityDamageByEntityEvent) e).getDamager().getType() == EntityType.PLAYER) {
+                ItemStack item = ((ItemFrame) e.getEntity()).getItem();
+                if(item.getType() == Material.FILLED_MAP) {
+                    MapView map = plugin.getServer().getMap((short) ((MapMeta) item.getItemMeta()).getMapId());
+                    if (map.getCenterX() == Courier.MAGIC_NUMBER
+                            && map.getId() != plugin.getCourierdb().getCourierMapId()
+                            && item.containsEnchantment(Enchantment.DURABILITY)) {
+                        e.setCancelled(true);
+                        ((ItemFrame) e.getEntity()).setItem(null);
+                    }
+                }
+            }
+        }
+
         // don't care about cause, if it's a postman then drop mail and bail
-        if(!e.isCancelled() && tracker.getPostman(e.getEntity().getUniqueId()) != null) {
+        if(tracker.getPostman(e.getEntity().getUniqueId()) != null) {
             plugin.getCConfig().clog(Level.FINE, "Postman taking damage");
             Postman postman = tracker.getPostman(e.getEntity().getUniqueId());
             if(!e.getEntity().isDead() && !postman.scheduledForQuickRemoval()) {
