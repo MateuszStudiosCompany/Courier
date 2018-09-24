@@ -15,11 +15,11 @@ public class Letter {
     private final int CANVAS_WIDTH = 128;
     @SuppressWarnings("UnusedDeclaration")
     private final int CANVAS_HEIGHT = 128;
-    static final String DATE_COLOR = "§"+(MapPalette.DARK_BROWN+2)+";";
-    static final String HEADER_COLOR = "§"+(MapPalette.DARK_BROWN)+";";
-    static final String HEADER_FROM_COLOR = "§"+(MapPalette.DARK_GREEN)+";";
-    static final String MESSAGE_COLOR = "§"+(MapPalette.DARK_BROWN)+";";
-    static final String MARKER_COLOR = "§"+(MapPalette.DARK_GREEN)+";";
+    static final String DATE_COLOR = "";//"§"+(MapPalette.DARK_BROWN+2)+";";
+    static final String HEADER_COLOR = "";//"§"+(MapPalette.DARK_BROWN)+";";
+    static final String HEADER_FROM_COLOR = "";//"§"+(MapPalette.DARK_GREEN)+";";
+    static final String MESSAGE_COLOR = "";//"§"+(MapPalette.DARK_BROWN)+";";
+    static final String MARKER_COLOR = "";//"§"+(MapPalette.DARK_GREEN)+";";
     private final int MAP_HEIGHT_LINES = 12; // we get 12 full lines of text body into a map
     private final Courier plugin;
     private final String receiver;
