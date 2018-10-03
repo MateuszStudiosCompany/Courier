@@ -10,7 +10,9 @@ import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import static java.util.logging.Level.INFO;
@@ -29,7 +31,7 @@ public class FramedLetterRenderer extends MapRenderer {
 //    private final byte[] clearImage = new byte[128*128];  // nice letter background image todo
     static byte[] clearImage = null;    // singleton
     BufferedImage framed = null;
-    boolean dirty = true;
+    HashSet<UUID> renderedFor = new HashSet<>();
     int page;
 
     public FramedLetterRenderer(Courier p, int page) {
@@ -67,7 +69,7 @@ public class FramedLetterRenderer extends MapRenderer {
             // it's a Courier map in an ItemFrame. We get called when it's in a loaded chunk. Player doesn't
             // even need to be near it. Performance issues galore ...
             Letter letter = plugin.getTracker().getLetter(map.getCenterZ());
-            if (letter != null && dirty) {
+            if (letter != null && !renderedFor.contains(player.getUniqueId())) {
                 plugin.getCConfig().clog(Level.FINE, "Rendering a Courier ItemFrame Letter (" + letter.getId() + ") on Map (" + map.getId() + ")");
                 for (int j = 0; j < CANVAS_HEIGHT; j++) {
                     for (int i = 0; i < CANVAS_WIDTH; i++) {
@@ -101,7 +103,7 @@ public class FramedLetterRenderer extends MapRenderer {
                             MinecraftFont.Font, Letter.DATE_COLOR + letter.getDisplayDate());
                 }
                 letter.setDirty(false);
-                dirty = false;
+                renderedFor.add(player.getUniqueId());
                 player.sendMap(map);
             }
         }

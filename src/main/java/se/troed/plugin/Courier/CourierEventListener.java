@@ -204,10 +204,13 @@ class CourierEventListener implements Listener {
                         }
                         // e.getPlayer().getEquipment().setItemInMainHand(mapItem);
                         // Replace the Courier Letter the player had with the new unique Map
-                        frame.setItem(mapItem);
+                        //frame.setItem(mapItem);
                         e.setCancelled(true);
                         //noinspection ConstantConditions
-                        Bukkit.getScheduler().runTaskLater(plugin, () -> letter.setDirty(true), 20);
+                        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                            letter.setDirty(true); // not needed here?
+                            frame.setItem(mapItem); // delay this otherwise other players don't see it
+                        }, 20);
                     } else if(type == Courier.FRAMEDLETTER) {
                         // Probably never happens since we convert them back on pickup and heldchange into regular Courier Letters
                         plugin.getCConfig().clog(Level.FINE, "Courier Framed Letter placed into ItemFrame");
