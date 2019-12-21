@@ -1,11 +1,11 @@
-package se.troed.plugin.Courier;
+package se.troed.plugin.Courier.events;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-class CourierReadEvent extends Event implements Cancellable {
+public class CourierReadEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled;
     private final Player player;

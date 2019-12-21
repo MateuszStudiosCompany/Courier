@@ -4,6 +4,7 @@ import org.bukkit.Location;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import se.troed.plugin.Courier.postmen.Postman;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -110,10 +111,10 @@ public class Tracker {
         Letter letter = letters.get(id);
         if(letter == null) {
             // server has lost the ItemStack<->Letter associations, re-populate
-            if(plugin.getCourierdb().isValid(id)) {
+            if(plugin.getCourierDB().isValid(id)) {
                 letter = new Letter(plugin, id);
                 addLetter(id, letter);
-                plugin.getCConfig().clog(Level.FINE, "Letter " + id + " recreated from db for " + plugin.getCourierdb().getPlayer(id));
+                plugin.getCConfig().clog(Level.FINE, "Letter " + id + " recreated from db for " + plugin.getCourierDB().getPlayer(id));
             } else {
                 // we've found an item pointing to a Courier letter that does not exist anylonger
                 // ripe for re-use!

@@ -1,4 +1,4 @@
-package se.troed.plugin.Courier;
+package se.troed.plugin.Courier.commands;
 
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.*;
@@ -11,8 +11,12 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.MapMeta;
-import org.bukkit.map.MapView;
 import org.bukkit.map.MinecraftFont;
+import se.troed.plugin.Courier.Courier;
+import se.troed.plugin.Courier.Letter;
+import se.troed.plugin.Courier.Tracker;
+import se.troed.plugin.Courier.postmen.Postman;
+import se.troed.plugin.Courier.postmen.Postmaster;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +25,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
-class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
+public class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
     private final Courier plugin;
     private final Tracker tracker;
 
@@ -33,27 +37,27 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
     // Player is null for console
     // This method didn't turn out that well. Should send a message to sender, when console,
     // about why the command fails when we need a player object
-    private boolean allowed(Player p, String c) {
-        boolean a = false;
-        if (p != null) {
-            if(c.equals(Courier.CMD_POSTMAN) && p.hasPermission(Courier.PM_POSTMAN)) {
-                a = true;
-            } else if(c.equals(Courier.CMD_COURIER) && p.hasPermission(Courier.PM_INFO)) {
-                a = true;
-            } else if(c.equals(Courier.CMD_POST) && p.hasPermission(Courier.PM_SEND)) {
-                a = true;
-            } else if(c.equals(Courier.CMD_LETTER) && p.hasPermission(Courier.PM_WRITE)) {
-                a = true;
-            } if(c.equals(Courier.CMD_COURIER)) {
-                a = true;
+    private boolean allowed(Player player, String command) {
+        boolean allowed = false;
+        if (player != null) {
+            if(command.equals(Courier.CMD_POSTMAN) && player.hasPermission(Courier.PM_POSTMAN)) {
+                allowed = true;
+            } else if(command.equals(Courier.CMD_COURIER) && player.hasPermission(Courier.PM_INFO)) {
+                allowed = true;
+            } else if(command.equals(Courier.CMD_POST) && player.hasPermission(Courier.PM_SEND)) {
+                allowed = true;
+            } else if(command.equals(Courier.CMD_LETTER) && player.hasPermission(Courier.PM_WRITE)) {
+                allowed = true;
+            } if(command.equals(Courier.CMD_COURIER)) {
+                allowed = true;
             }
             plugin.getCConfig().clog(Level.FINE, "Player command event");
         } else {
             // console operator is op, no player and no location
             plugin.getCConfig().clog(Level.FINE, "Server command event");
         }
-        plugin.getCConfig().clog(Level.FINE, "Permission: " + a);
-        return a;
+        plugin.getCConfig().clog(Level.FINE, "Permission: " + allowed);
+        return allowed;
     }
 
     /*
@@ -82,7 +86,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                 }
                 retVal = true;
             } else if(args[0].equalsIgnoreCase("unread")) {
-                if(plugin.getCourierdb().deliverUnreadMessages(player.getName())) {
+                if(plugin.getCourierDB().deliverUnreadMessages(player.getName())) {
                     Courier.display(player, plugin.getCConfig().getPostmanExtraDeliveries());
                 } else {
                     Courier.display(player, plugin.getCConfig().getPostmanNoUnreadMail());
@@ -108,18 +112,18 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
         usage: /postman
      */
     boolean commandPostman(Player player) {
-        if(plugin.getCourierdb().undeliveredMail(player.getName())) {
-            int undeliveredMessageId = plugin.getCourierdb().undeliveredMessageId(player.getName());
+        if(plugin.getCourierDB().undeliveredMail(player.getName())) {
+            int undeliveredMessageId = plugin.getCourierDB().undeliveredMessageId(player.getName());
             if(undeliveredMessageId != -1) {
                 // this is really a command meant for testing, no need for translation
                 Courier.display(player, "You've got mail waiting for delivery!");
 
                 plugin.getCConfig().clog(Level.FINE, "MessageId: " + undeliveredMessageId);
-                String from = plugin.getCourierdb().getSender(player.getName(), undeliveredMessageId);
-                String message = plugin.getCourierdb().getMessage(player.getName(), undeliveredMessageId);
+                String from = plugin.getCourierDB().getSender(player.getName(), undeliveredMessageId);
+                String message = plugin.getCourierDB().getMessage(player.getName(), undeliveredMessageId);
                 plugin.getCConfig().clog(Level.FINE, "Sender: " + from + " Message: " + message);
                 if(from != null && message != null) {
-                    Location spawnLoc = plugin.findSpawnLocation(player);
+                    Location spawnLoc = Postmaster.findSpawnLocation(plugin, player);
                     if(spawnLoc != null) {
 //                        Postman postman = new CreaturePostman(plugin, player, undeliveredMessageId);
                         Postman postman = Postman.create(plugin, player, undeliveredMessageId);
@@ -267,7 +271,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                     }
                     if(send) {
                         // sign over this letter to recipient
-                        if(plugin.getCourierdb().sendMessage(letter.getId(), p.getName(), player.getName())) {
+                        if(plugin.getCourierDB().sendMessage(letter.getId(), p.getName(), player.getName())) {
                             // existing Letter now has outdated info, will automatically be recreated from db
                             tracker.removeLetter(letter.getId());
 //                            plugin.getLetterRenderer().forceClear();
@@ -336,7 +340,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                 } else if(letter != null) {
                     // new stuff appended to the old
                     // fetch from db, letter.getMessage contains newline formatted text
-                    message.append(plugin.getCourierdb().getMessage(letter.getReceiver(), id));
+                    message.append(plugin.getCourierDB().getMessage(letter.getReceiver(), id));
                     if(!player.getName().equalsIgnoreCase(letter.getSender())) {
                         // we're adding to existing text from someone else, add newlines
                         // extra credits: detect if we were going to be on a new line anyway, then only append one
@@ -383,7 +387,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                         Courier.display(player, plugin.getCConfig().getLetterSkippedText());
                     }
     
-                    if (plugin.getCourierdb().storeMessage(id,
+                    if (plugin.getCourierDB().storeMessage(id,
                             player.getName(),
                             message.toString(), // .trim() but then /letter on /letter needs added space anyway
                             (int)(System.currentTimeMillis() / 1000L))) { // oh noes unix y2k issues!!!11
@@ -400,7 +404,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                                 List<String> strings = new ArrayList<String>();
                                 strings.add(letter.getTopRow());
                                 meta.setLore(strings);
-								((MapMeta) meta).setMapId(plugin.getCourierdb().getCourierMapId());
+								((MapMeta) meta).setMapId(plugin.getCourierDB().getCourierMapId());
                                 letterItem.setItemMeta(meta);
                             } else {
                                 // ???
@@ -505,7 +509,7 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
             // letters aren't free on this server
             if(plugin.getCConfig().getRequiresCrafting()) {
                 if(crafted) {
-                    id = plugin.getCourierdb().generateUID();
+                    id = plugin.getCourierDB().generateUID();
                 } else {
                     // Well, if we end up here the player hadn't crafted a Letter and we're not making one for him/her
                     Courier.display(player, plugin.getCConfig().getLetterNoCraftedFound());
@@ -531,12 +535,12 @@ class CourierCommands /*extends ServerListener*/ implements CommandExecutor {
                         inv.removeItem(resource);
                     }
                     player.updateInventory(); // deprecated, but apparently the correct thing to do
-                    id = plugin.getCourierdb().generateUID();
+                    id = plugin.getCourierDB().generateUID();
                 }
             }
         } else {
             // letters are free
-            id = plugin.getCourierdb().generateUID();
+            id = plugin.getCourierDB().generateUID();
         }
         return id;
     }

@@ -1,9 +1,10 @@
-package se.troed.plugin.Courier;
+package se.troed.plugin.Courier.postmen;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Creature;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import se.troed.plugin.Courier.Courier;
 
 /* Allows all Creatures to be Postmen, although we only test with Villagers (and Enderman)
  *
@@ -20,12 +21,12 @@ public class CreaturePostman extends Postman {
 
     public void spawn(Location l) {
         postman = (Creature) player.getWorld().spawnEntity(l, type);
-        if(plugin.getCConfig().getWalkToPlayer()) {
-            postman.setTarget(player);
-        }
         uuid = postman.getUniqueId();
         postman.setCustomName("Postman");
         postman.setCustomNameVisible(true);
+        if(plugin.getCConfig().getWalkToPlayer()) {
+            postman.setTarget(player);
+        }
     }
 
     @Override

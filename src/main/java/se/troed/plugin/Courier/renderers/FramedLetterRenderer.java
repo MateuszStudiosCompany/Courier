@@ -1,21 +1,21 @@
-package se.troed.plugin.Courier;
+package se.troed.plugin.Courier.renderers;
 
 import org.bukkit.entity.Player;
-import org.bukkit.map.*;
+import org.bukkit.map.MapCanvas;
+import org.bukkit.map.MapPalette;
+import org.bukkit.map.MapRenderer;
+import org.bukkit.map.MapView;
+import org.bukkit.map.MinecraftFont;
+import se.troed.plugin.Courier.Courier;
+import se.troed.plugin.Courier.Letter;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReadParam;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.UUID;
 import java.util.logging.Level;
-
-import static java.util.logging.Level.INFO;
 
 public class FramedLetterRenderer extends MapRenderer {
 
@@ -65,7 +65,7 @@ public class FramedLetterRenderer extends MapRenderer {
     // https://bukkit.atlassian.net/browse/BUKKIT-476
     @Override
     public void render(MapView map, MapCanvas canvas, Player player) {
-        if (map.getCenterX() == Courier.MAGIC_NUMBER && map.getId() != plugin.getCourierdb().getCourierMapId()) {
+        if (map.getCenterX() == Courier.MAGIC_NUMBER && map.getId() != plugin.getCourierDB().getCourierMapId()) {
             // it's a Courier map in an ItemFrame. We get called when it's in a loaded chunk. Player doesn't
             // even need to be near it. Performance issues galore ...
             Letter letter = plugin.getTracker().getLetter(map.getCenterZ());

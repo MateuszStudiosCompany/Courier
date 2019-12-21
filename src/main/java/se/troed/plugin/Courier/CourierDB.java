@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -139,7 +140,7 @@ public class CourierDB {
 
     // if filename == null, uses default
     // (this makes making backups really easy)
-    boolean save(String filename) {
+    void save(String filename) {
         boolean ret = false;
         if(mdb != null) {
             File db = new File(plugin.getDataFolder(), filename != null ? filename : FILENAME);
@@ -151,28 +152,24 @@ public class CourierDB {
                 e.printStackTrace();
             }
         }
-        return ret;
     }
 
     // even if we're run under a JVM with non-utf8 default encoding, force it
     // at least that was the idea, but on Mac it's still read back using MacRoman. No automatic switching to UTF-8
-    void saveUTFConfig(File file, YamlConfiguration yaml) throws IOException {
+    public void saveUTFConfig(File file, YamlConfiguration yaml) throws IOException {
         if(yaml != null) {
             Charset cs;
             try {
-                cs = Charset.forName("UTF-8");
+                cs = StandardCharsets.UTF_8;
             } catch (Exception e) {
                 throw new IOException("UTF-8 not a supported charset");
             }
 
             Files.createParentDirs(file);
             String data = yaml.saveToString();
-            OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), cs);
 
-            try {
+            try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), cs)) {
                 writer.write(data);
-            } finally {
-                writer.close();
             }
         }
     }
@@ -194,27 +191,27 @@ public class CourierDB {
     }
 
     // retrieves what we think is our specially allocated Map
-    short getCourierMapId() {
+    public int getCourierMapId() {
         if(mdb == null) {
             return -1;
         }
-        return (short)mdb.getInt("courierclaimedmap", -1);
+        return mdb.getInt("courierclaimedmap", -1);
     }
     
-    void setCourierMapId(short mapId) {
+    void setCourierMapId(int mapId) {
         if(mdb == null) {
             return;
         }
-        mdb.set("courierclaimedmap", (int)mapId);
+        mdb.set("courierclaimedmap", mapId);
     }
 
-    boolean sendMessage(int id, String r, String s) {
+    public boolean sendMessage(int id, String recipient, String sender) {
         boolean ret = false;
-        if(mdb == null || r == null || s == null) {
+        if(mdb == null || recipient == null || sender == null) {
             return false;
         }
 
-        r = r.toLowerCase();
+        recipient = recipient.toLowerCase();
         
         // nothing to say the player who wants to send a picked up Letter is the one with it in her storage
         // but if player2 steals a letter written by player1 and immediately sends to player3, player1
@@ -228,34 +225,30 @@ public class CourierDB {
             String m = getMessage(origin, id);
             int date = getDate(origin, id);
 
-            List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
-            if(messageids == null) {
-                messageids = new ArrayList<>();
-            }
-            if(!messageids.contains(id)) { // I should move to a non-duplicate storage type .. 
+            List<Integer> messageids = mdb.getIntegerList(recipient + ".messageids");
+            if(!messageids.contains(id)) { // I should move to a non-duplicate storage type ..
                 messageids.add(id);
             }
-            mdb.set(r + ".messageids", messageids);
-            mdb.set(r + "." + String.valueOf(id) + ".sender", s);
-            mdb.set(r + "." + String.valueOf(id) + ".message", m);
-            mdb.set(r + "." + String.valueOf(id) + ".date", date);
+            mdb.set(recipient + ".messageids", messageids);
+            mdb.set(recipient + "." + id + ".sender", sender);
+            mdb.set(recipient + "." + id + ".message", m);
+            mdb.set(recipient + "." + id + ".date", date);
             // new messages can't have been delivered
-            mdb.set(r + "." + String.valueOf(id) + ".delivered", false);
+            mdb.set(recipient + "." + id + ".delivered", false);
             // new messages can't have been read
-            mdb.set(r + "." + String.valueOf(id) + ".read", false);
+            mdb.set(recipient + "." + id + ".read", false);
 
             // since there's at least one new message, set newmail to true
-            mdb.set(r + ".newmail", true);
+            mdb.set(recipient + ".newmail", true);
 
             // if we send to ourselves, don't delete what we just added
-            if(!r.equalsIgnoreCase(origin)) {
+            if(!recipient.equalsIgnoreCase(origin)) {
                 // "atomic" remove
                 messageids = mdb.getIntegerList(origin + ".messageids");
-                if(messageids != null) { // safety check
-                    messageids.remove(Integer.valueOf(id));
-                }
+                // safety check
+                messageids.remove(Integer.valueOf(id));
                 mdb.set(origin + ".messageids", messageids);
-                mdb.set(origin + "." + String.valueOf(id), null);
+                mdb.set(origin + "." + id, null);
             }
 
             this.save(null);
@@ -264,7 +257,7 @@ public class CourierDB {
         return ret;    
     }
 
-    boolean storeMessage(int id, String s, String m, int d) {
+    public boolean storeMessage(int id, String s, String m, int d) {
         if(mdb == null || s == null || m == null) {
             return false;
         }
@@ -274,19 +267,16 @@ public class CourierDB {
 
         // update messageids
         List<Integer> messageids = mdb.getIntegerList(skey + ".messageids");
-        if(messageids == null) {
-            messageids = new ArrayList<>();
-        }
-        if(!messageids.contains(id)) { // I should move to a non-duplicate storage type .. 
+        if(!messageids.contains(id)) { // I should move to a non-duplicate storage type ..
             messageids.add(id);
         }
         mdb.set(skey + ".messageids", messageids);
 
-        mdb.set(skey + "." + String.valueOf(id) + ".sender", s);
-        mdb.set(skey + "." + String.valueOf(id) + ".message", m);
-        mdb.set(skey + "." + String.valueOf(id) + ".date", d);
-        mdb.set(skey + "." + String.valueOf(id) + ".delivered", true);
-        mdb.set(skey + "." + String.valueOf(id) + ".read", true);
+        mdb.set(skey + "." + id + ".sender", s);
+        mdb.set(skey + "." + id + ".message", m);
+        mdb.set(skey + "." + id + ".date", d);
+        mdb.set(skey + "." + id + ".delivered", true);
+        mdb.set(skey + "." + id + ".read", true);
         // we do not change .newmail when storing in our own storage, of course
 
         if(origin != null && !s.equalsIgnoreCase(origin)) {
@@ -296,7 +286,7 @@ public class CourierDB {
                 messageids.remove(Integer.valueOf(id));
             }
             mdb.set(origin + ".messageids", messageids);
-            mdb.set(origin + "." + String.valueOf(id), null);            
+            mdb.set(origin + "." + id, null);
         }
         
         this.save(null); // save after each stored message currently
@@ -326,33 +316,27 @@ public class CourierDB {
             if(!r.equals(rlower)) {
                 // this receiver needs full rewriting
                 boolean newmail = mdb.getBoolean(r + ".newmail");
-                List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
-                if(messageids == null) { // safety, should not happen in this case
-                    messageids = new ArrayList<>();
-                }
-                List<Integer> newMessageids = mdb.getIntegerList(rlower + ".messageids");
-                if(newMessageids == null) { // most likely, but who knows?
-                    newMessageids = new ArrayList<>();
-                }
-                for(Integer id : messageids) {
+                List<Integer> messageIDs = mdb.getIntegerList(r + ".messageids");
+                List<Integer> newMessageIDs = mdb.getIntegerList(rlower + ".messageids");
+                for(Integer id : messageIDs) {
                     // fetch a message
-                    String s = mdb.getString(r + "." + String.valueOf(id) + ".sender");
-                    String m = mdb.getString(r + "." + String.valueOf(id) + ".message");
-                    int date = mdb.getInt(r + "." + String.valueOf(id) + ".date");
-                    boolean delivered = mdb.getBoolean(r + "." + String.valueOf(id) + ".delivered");
-                    boolean read = mdb.getBoolean(r + "." + String.valueOf(id) + ".read");
+                    String s = mdb.getString(r + "." + id + ".sender");
+                    String m = mdb.getString(r + "." + id + ".message");
+                    int date = mdb.getInt(r + "." + id + ".date");
+                    boolean delivered = mdb.getBoolean(r + "." + id + ".delivered");
+                    boolean read = mdb.getBoolean(r + "." + id + ".read");
                     
-                    mdb.set(rlower + "." + String.valueOf(id) + ".sender", s);
-                    mdb.set(rlower + "." + String.valueOf(id) + ".message", m);
-                    mdb.set(rlower + "." + String.valueOf(id) + ".date", date);
-                    mdb.set(rlower + "." + String.valueOf(id) + ".delivered", delivered);
-                    mdb.set(rlower + "." + String.valueOf(id) + ".read", read);
+                    mdb.set(rlower + "." + id + ".sender", s);
+                    mdb.set(rlower + "." + id + ".message", m);
+                    mdb.set(rlower + "." + id + ".date", date);
+                    mdb.set(rlower + "." + id + ".delivered", delivered);
+                    mdb.set(rlower + "." + id + ".read", read);
 
-                    newMessageids.add(id);
+                    newMessageIDs.add(id);
 
-                    mdb.set(r + "." + String.valueOf(id), null); // delete old message
+                    mdb.set(r + "." + id, null); // delete old message
                 }
-                mdb.set(rlower + ".messageids", newMessageids);
+                mdb.set(rlower + ".messageids", newMessageIDs);
                 mdb.set(rlower + ".newmail", newmail);
 
                 mdb.set(r, null); // delete the old entry
@@ -362,7 +346,7 @@ public class CourierDB {
     }
     
     // used for legacy Letter conversion only
-    boolean storeDate(int id, int d) {
+    public boolean storeDate(int id, int d) {
         if(mdb == null) {
             return false;
         }
@@ -371,13 +355,13 @@ public class CourierDB {
         if(player == null) {
             return false; // this would be bad
         }
-        mdb.set(player + "." + String.valueOf(id) + ".date", d);
+        mdb.set(player + "." + id + ".date", d);
 
         return true;
     }
     
     // currently used for legacy Letter conversion only, but it is generalized
-    void changeId(int oldid, int newid) {
+    public void changeId(int oldid, int newid) {
         if(mdb == null) {
             return;
         }
@@ -389,60 +373,55 @@ public class CourierDB {
         boolean delivered = getDelivered(r, oldid);
         boolean read = getRead(r, oldid);
         
-        List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
-        if(messageids == null) { // safety, should not happen in this case
-            messageids = new ArrayList<>();
-        }
-        messageids.add(newid);
+        List<Integer> messageIDs = mdb.getIntegerList(r + ".messageids");
+        messageIDs.add(newid);
         // "atomic" add
-        mdb.set(r + ".messageids", messageids);
-        mdb.set(r + "." + String.valueOf(newid) + ".sender", s);
-        mdb.set(r + "." + String.valueOf(newid) + ".message", m);
-        mdb.set(r + "." + String.valueOf(newid) + ".date", date);
-        mdb.set(r + "." + String.valueOf(newid) + ".delivered", delivered);
-        mdb.set(r + "." + String.valueOf(newid) + ".read", read);
+        mdb.set(r + ".messageids", messageIDs);
+        mdb.set(r + "." + newid + ".sender", s);
+        mdb.set(r + "." + newid + ".message", m);
+        mdb.set(r + "." + newid + ".date", date);
+        mdb.set(r + "." + newid + ".delivered", delivered);
+        mdb.set(r + "." + newid + ".read", read);
 
         // "atomic" remove
-        messageids.remove(Integer.valueOf(oldid)); // caught out by ArrayList.remove(Object o) vs remove(int i) ...
-        mdb.set(r + ".messageids", messageids);
-        mdb.set(r + "." + String.valueOf(oldid), null);
+        messageIDs.remove(Integer.valueOf(oldid)); // caught out by ArrayList.remove(Object o) vs remove(int i) ...
+        mdb.set(r + ".messageids", messageIDs);
+        mdb.set(r + "." + oldid, null);
     }
 
-    boolean undeliveredMail(String r) {
+    public boolean undeliveredMail(String recipient) {
         //noinspection SimplifiableIfStatement
-        if(mdb == null || r == null) {
+        if(mdb == null || recipient == null) {
             return false;
         }
         
-        r = r.toLowerCase();
+        recipient = recipient.toLowerCase();
 
-        return mdb.getBoolean(r + ".newmail");
+        return mdb.getBoolean(recipient + ".newmail");
     }
 
     // runs through messageids, sets all unread messages to undelivered
     // returns false when there are no unread messages
-    boolean deliverUnreadMessages(String r) {
+    public boolean deliverUnreadMessages(String r) {
         if(mdb == null || r == null) {
             return false;
         }
 
         r = r.toLowerCase();
 
-        boolean newmail = false;
+        boolean newMail = false;
         List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
-        if(messageids != null) {
-            for(Integer id : messageids) {
-                boolean read = mdb.getBoolean(r + "." + String.valueOf(id) + ".read");
-                if(!read) {
-                    mdb.set(r + "." + String.valueOf(id) + ".delivered", false);
-                    newmail = true;
-                }
+        for(Integer id : messageids) {
+            boolean read = mdb.getBoolean(r + "." + id + ".read");
+            if(!read) {
+                mdb.set(r + "." + id + ".delivered", false);
+                newMail = true;
             }
         }
-        if(newmail) {
-            mdb.set(r + ".newmail", newmail);
+        if(newMail) {
+            mdb.set(r + ".newmail", newMail);
         }
-        return newmail;
+        return newMail;
     }
 
     // runs through messageids, finds a message not read and returns the corresponding id
@@ -455,12 +434,10 @@ public class CourierDB {
         r = r.toLowerCase();
 
         List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
-        if(messageids != null) {
-            for(Integer id : messageids) {
-                boolean read = mdb.getBoolean(r + "." + String.valueOf(id) + ".read");
-                if(!read) {
-                    return id;
-                }
+        for(Integer id : messageids) {
+            boolean read = mdb.getBoolean(r + "." + id + ".read");
+            if(!read) {
+                return id;
             }
         }
         return -1;
@@ -468,7 +445,7 @@ public class CourierDB {
 
     // runs through messageids, finds a message not delivered and returns the corresponding id
     // returns -1 on failure
-    int undeliveredMessageId(String r) {
+    public int undeliveredMessageId(String r) {
         if(mdb == null || r == null) {
             return -1;
         }
@@ -478,7 +455,7 @@ public class CourierDB {
         List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
         if(messageids != null) {
             for(Integer id : messageids) {
-                boolean delivered = mdb.getBoolean(r + "." + String.valueOf(id) + ".delivered");
+                boolean delivered = mdb.getBoolean(r + "." + id + ".delivered");
                 if(!delivered) {
                     return id;
                 }
@@ -491,7 +468,7 @@ public class CourierDB {
     }
 
     // removes a single Letter from the database
-    boolean deleteMessage(short id) {
+    public boolean deleteMessage(short id) {
         if(id == -1 || mdb == null) {
             return false;
         }
@@ -502,14 +479,11 @@ public class CourierDB {
         }
 
         List<Integer> messageids = mdb.getIntegerList(r + ".messageids");
-        if(messageids == null) { // safety, should not happen in this case
-            messageids = new ArrayList<>();
-        }
 
         // "atomic" remove
         messageids.remove(Integer.valueOf(id)); // caught out by ArrayList.remove(Object o) vs remove(int i) ...
         mdb.set(r + ".messageids", messageids);
-        mdb.set(r + "." + String.valueOf(id), null);
+        mdb.set(r + "." + id, null);
 
         // todo: If our Letter had been delivered to another Player then remove that delivered info for them too.
         // seems not critical. new letters will set delivered to false even if ID is reused
@@ -545,31 +519,27 @@ public class CourierDB {
         Set<String> strings = mdb.getKeys(false);
         for (String key : strings) {
             List<Integer> messageids = mdb.getIntegerList(key + ".messageids");
-            if (messageids != null && messageids.contains(id)) {
+            if (messageids.contains(id)) {
                 return key;
             }
         }
         return null;
     }
     
-    String getSender(String r, int id) {
-        if(mdb == null || r == null) {
+    public String getSender(String recipient, int id) {
+        if(mdb == null || recipient == null) {
             return null;
         }
 
-        r = r.toLowerCase();
-
-        return mdb.getString(r + "." + String.valueOf(id) + ".sender");
+        return mdb.getString(recipient.toLowerCase() + "." + id + ".sender");
     }
     
-    String getMessage(String r, int id) {
-        if(mdb == null || r == null) {
+    public String getMessage(String recipient, int id) {
+        if(mdb == null || recipient == null) {
             return null;
         }
 
-        r = r.toLowerCase();
-
-        return mdb.getString(r + "." + String.valueOf(id) + ".message");
+        return mdb.getString(recipient.toLowerCase() + "." + id + ".message");
     }
 
     private boolean getDelivered(String r, int id) {
@@ -580,19 +550,19 @@ public class CourierDB {
 
         r = r.toLowerCase();
 
-        return mdb.getBoolean(r + "." + String.valueOf(id) + ".delivered");
+        return mdb.getBoolean(r + "." + id + ".delivered");
     }
 
     // unexpected side effect, we end up here if player1 takes a message intended for player2
     // exploit or remove logging of it?
-    boolean setDelivered(String r, int id) {
+    public boolean setDelivered(String r, int id) {
         if(mdb == null || r == null || id==-1) {
             return false;
         }
 
         r = r.toLowerCase();
 
-        mdb.set(r + "." + String.valueOf(id) + ".delivered", true);
+        mdb.set(r + "." + id + ".delivered", true);
         undeliveredMessageId(r); // DIRTY way of making sure "newmail" is cleared
         return true;
     }
@@ -604,7 +574,7 @@ public class CourierDB {
 
         r = r.toLowerCase();
 
-        return mdb.getInt(r + "." + String.valueOf(id) + ".date");
+        return mdb.getInt(r + "." + id + ".date");
     }
 
     boolean getRead(String r, int id) {
@@ -615,35 +585,33 @@ public class CourierDB {
 
         r = r.toLowerCase();
 
-        return mdb.getBoolean(r + "." + String.valueOf(id) + ".read");
+        return mdb.getBoolean(r + "." + id + ".read");
     }
 
-    boolean setRead(String r, int id) {
-        if(mdb == null || r == null || id==-1) {
+    public boolean setRead(String reader, int id) {
+        if(mdb == null || reader == null || id==-1) {
             return false;
         }
 
-        r = r.toLowerCase();
+        reader = reader.toLowerCase();
 
-        mdb.set(r + "." + String.valueOf(id) + ".read", true);
+        mdb.set(reader + "." + id + ".read", true);
         return true;
     }
 
     // returns the first available id, or -1 when we're fatally out of them (or db error .. hmm)
     // expected to be called seldom (at letter creation) and is allowed to be slow
     // obvious caching/persisting of TreeSet possible
-    int generateUID() {
+    public int generateUID() {
         if(mdb == null) {
             return -1;
         }
         TreeSet<Integer> sortedSet = new TreeSet<>();
         Set<String> players = mdb.getKeys(false);
         for (String player : players) {
-            List<Integer> messageids = mdb.getIntegerList(player + ".messageids");
-            if (messageids != null) {
-                // add all messageids found for this player to our ordered set
-                sortedSet.addAll(messageids);
-            }
+            List<Integer> messageIDs = mdb.getIntegerList(player + ".messageids");
+            // add all messageids found for this player to our ordered set
+            sortedSet.addAll(messageIDs);
         }
         // make sure we don't enter negative number territory
         // todo: introduce "fuzziness" making nextId less predictable

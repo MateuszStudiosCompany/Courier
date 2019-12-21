@@ -1,4 +1,4 @@
-package se.troed.plugin.Courier;
+package se.troed.plugin.Courier.events;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;

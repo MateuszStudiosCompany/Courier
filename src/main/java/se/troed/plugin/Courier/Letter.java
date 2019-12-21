@@ -10,16 +10,18 @@ import java.util.logging.Level;
  * A Letter is a cached database entry with text pre-formatted for Map rendering
  */
 public class Letter {
+
+    public static final String DATE_COLOR = "";//"§"+(MapPalette.DARK_BROWN+2)+";";
+    public static final String HEADER_COLOR = "";//"§"+(MapPalette.DARK_BROWN)+";";
+    public static final String HEADER_FROM_COLOR = "";//"§"+(MapPalette.DARK_GREEN)+";";
+    public static final String MESSAGE_COLOR = "";//"§"+(MapPalette.DARK_BROWN)+";";
+    public static final String MARKER_COLOR = "";//"§"+(MapPalette.DARK_GREEN)+";";
+
     // while not specified with an API constant map width is hardcoded as 128 pixels
     @SuppressWarnings("FieldCanBeLocal")
     private final int CANVAS_WIDTH = 128;
     @SuppressWarnings("UnusedDeclaration")
     private final int CANVAS_HEIGHT = 128;
-    static final String DATE_COLOR = "";//"§"+(MapPalette.DARK_BROWN+2)+";";
-    static final String HEADER_COLOR = "";//"§"+(MapPalette.DARK_BROWN)+";";
-    static final String HEADER_FROM_COLOR = "";//"§"+(MapPalette.DARK_GREEN)+";";
-    static final String MESSAGE_COLOR = "";//"§"+(MapPalette.DARK_BROWN)+";";
-    static final String MARKER_COLOR = "";//"§"+(MapPalette.DARK_GREEN)+";";
     private final int MAP_HEIGHT_LINES = 12; // we get 12 full lines of text body into a map
     private final Courier plugin;
     private final String receiver;
@@ -41,7 +43,7 @@ public class Letter {
     public Letter(Courier plug, int id) {
         plugin = plug;
         // not happy. would much rather prefer if all database handling was in CourierDatabase
-        CourierDB db = plug.getCourierdb();
+        CourierDB db = plug.getCourierDB();
         this.id = id;
         receiver = db.getPlayer(id);
         sender = db.getSender(receiver, id);

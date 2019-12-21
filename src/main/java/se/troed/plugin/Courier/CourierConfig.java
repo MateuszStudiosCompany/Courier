@@ -103,7 +103,7 @@ public class CourierConfig {
     
     CourierConfig(Courier plug) {
 
-        log = plug.getServer().getLogger();
+        log = plug.getLogger();
 
         config = plug.getConfig();
         PluginDescriptionFile pdfFile = plug.getDescription();
@@ -194,23 +194,23 @@ public class CourierConfig {
         return useFees;
     }
 
-    int getQuickDespawnTime() {
+    public int getQuickDespawnTime() {
         return quickDespawnTime;
     }
 
-    int getDespawnTime() {
+    public int getDespawnTime() {
         return despawnTime;
     }
 
-    int getInitialWait() {
+    public int getInitialWait() {
         return initialWait;
     }
 
-    int getNextRoute() {
+    public int getNextRoute() {
         return nextRoute;
     }
 
-    boolean getWalkToPlayer() {
+    public boolean getWalkToPlayer() {
         return walkToPlayer;
     }
 
@@ -218,7 +218,7 @@ public class CourierConfig {
         return type;
     }
 
-    int getSpawnDistance() {
+    public int getSpawnDistance() {
         return spawnDistance;
     }
 
@@ -227,54 +227,54 @@ public class CourierConfig {
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    boolean getFreeLetter() {
+    public boolean getFreeLetter() {
         return freeLetter;
     }
 
-    List<ItemStack> getLetterResources() {
+    public List<ItemStack> getLetterResources() {
         return letterStacks;
     }
 
-    boolean getRequiresCrafting() {
+    public boolean getRequiresCrafting() {
         return config.getBoolean(LETTER_REQUIRESCRAFTING, false);
     }
 
-    boolean getBreakSpawnProtection() {
+    public boolean getBreakSpawnProtection() {
         return breakSpawnProtection;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    boolean getSealedEnvelope() {
+    public boolean getSealedEnvelope() {
         return sealedEnvelope;
     }
 
-    boolean getLetterFrameable() {
+    public boolean getLetterFrameable() {
         return config.getBoolean(LETTER_FRAMEABLE, true);
     }
 
-    boolean getCreativeDelivery() {
+    public boolean getCreativeDelivery() {
         return config.getBoolean(POSTMAN_CREATIVEDELIVERY, false);
     }
 
-    String getBankAccount() {
+    public String getBankAccount() {
         return config.getString(FEE_BANKACCOUNT, "");
     }
 
-    Double getFeeSend() {
+    public Double getFeeSend() {
         return feeSend;
     }
 
-    int getVanishDistance() {
+    public int getVanishDistance() {
         return config.getInt(POSTMAN_VANISHDISTANCE, 0);
     }
 
     // translatable strings
 
-    String getGreeting() {
+    public String getGreeting() {
         return colorize(config.getString(POSTMAN_GREETING, "")); // added in 0.9.1
     }
 
-    String getMailDrop() {
+    public String getMailDrop() {
         return colorize(config.getString(POSTMAN_MAILDROP, "")); // added in 0.9.1
     }
 
@@ -282,154 +282,154 @@ public class CourierConfig {
         return colorize(config.getString(POSTMAN_INVENTORY, "")); // added in 0.9.5
     }
 
-    String getCannotDeliver() {
+    public String getCannotDeliver() {
         return colorize(config.getString(POSTMAN_CANNOTDELIVER, "")); // added in 0.9.6
     }
 
-    String getLetterDrop() {
+    public String getLetterDrop() {
         return colorize(config.getString(LETTER_DROP, "")); // added in 0.9.10
     }
 
-    String getLetterInventory() {
+    public String getLetterInventory() {
         return colorize(config.getString(LETTER_INVENTORY, "")); // added in 0.9.10
     }
 
-    String getInfoFee(String fee) {
+    public String getInfoFee(String fee) {
         return String.format(colorize(config.getString(FEE_INFOFEE, "")), fee); // 1.1.0
     }
 
-    String getInfoNoFee() {
+    public String getInfoNoFee() {
         return colorize(config.getString(FEE_INFONOFEE, "")); // 1.1.0
     }
 
     // LetterRender colorization
-    String getPrivacyLocked(String player) {
+    public String getPrivacyLocked(String player) {
         return String.format(colorize2(config.getString(PRIVACY_LOCKED)), player); // 1.1.8
     }
 
-    String getPostmanExtraDeliveries() {
+    public String getPostmanExtraDeliveries() {
         return colorize(config.getString(POSTMAN_EXTRADELIVERIES, "")); // 1.1.0
     }
 
-    String getPostmanNoUnreadMail() {
+    public String getPostmanNoUnreadMail() {
         return colorize(config.getString(POSTMAN_NOUNREADMAIL, "")); // 1.1.0
     }
 
-    String getPostNoCredit(String fee) {
+    public String getPostNoCredit(String fee) {
         return String.format(colorize(config.getString(POST_NOCREDIT, "")), fee); // 1.1.0
     }
 
-    String getPostNoRecipient() {
+    public String getPostNoRecipient() {
         return colorize(config.getString(POST_NORECIPIENT, "")); // 1.1.0
     }
 
-    String getPostDidYouMean(String input, String match) {
+    public String getPostDidYouMean(String input, String match) {
         return String.format(colorize(config.getString(POST_DIDYOUMEAN, "")), input, match); // 1.1.0
     }
 
-    String getPostDidYouMeanList(String input) {
+    public String getPostDidYouMeanList(String input) {
         return String.format(colorize(config.getString(POST_DIDYOUMEANLIST, "")), input); // 1.1.0
     }
 
-    String getPostDidYouMeanList2(String list) {
+    public String getPostDidYouMeanList2(String list) {
         return String.format(colorize(config.getString(POST_DIDYOUMEANLIST2, "")), list); // 1.1.0
     }
 
-    String getPostNoSuchPlayer(String input) {
+    public String getPostNoSuchPlayer(String input) {
         return String.format(colorize(config.getString(POST_NOSUCHPLAYER, "")), input); // 1.1.0
     }
 
-    String getPostLetterSent(String recipient) {
+    public String getPostLetterSent(String recipient) {
         return String.format(colorize(config.getString(POST_LETTERSENT, "")), recipient); // 1.1.0
     }
 
-    String getPostLetterSentFee(String recipient, String fee) {
+    public String getPostLetterSentFee(String recipient, String fee) {
         return String.format(colorize(config.getString(POST_LETTERSENTFEE, "")), recipient, fee); // 1.1.0
     }
 
-    String getPostFundProblem() {
+    public String getPostFundProblem() {
         return colorize(config.getString(POST_FUNDPROBLEM, "")); // 1.1.0
     }
 
-    String getPostNoLetter() {
+    public String getPostNoLetter() {
         return colorize(config.getString(POST_NOLETTER, "")); // 1.1.0
     }
 
-    String getLetterNoText() {
+    public String getLetterNoText() {
         return colorize(config.getString(LETTER_NOTEXT, "")); // 1.1.0
     }
 
-    String getLetterSkippedText() {
+    public String getLetterSkippedText() {
         return colorize(config.getString(LETTER_SKIPPEDTEXT, "")); // 1.1.0
     }
 
-    String getLetterCreateFailed() {
+    public String getLetterCreateFailed() {
         return colorize(config.getString(LETTER_CREATEFAILED, "")); // 1.1.0
     }
 
-    String getLetterNoMoreUIDs() {
+    public String getLetterNoMoreUIDs() {
         return colorize(config.getString(LETTER_NOMOREUIDS, "")); // 1.1.0
     }
 
-    String getLetterInfoCost(String resources) {
+    public String getLetterInfoCost(String resources) {
         return String.format(colorize(config.getString(LETTER_INFOCOST, "")), resources); // 1.1.5
     }
 
-    String getLetterInfoFree() {
+    public String getLetterInfoFree() {
         return colorize(config.getString(LETTER_INFOFREE, "")); // 1.1.5
     }
 
-    String getLetterLackingResources() {
+    public String getLetterLackingResources() {
         return colorize(config.getString(LETTER_LACKINGRESOURCES, "")); // 1.1.5
     }
 
-    String getLetterNoCraftedFound() {
+    public String getLetterNoCraftedFound() {
         return colorize(config.getString(LETTER_NOCRAFTEDFOUND, "")); // 1.1.8
     }
 
     // Lore should not be colorized
-    String getLetterDisplayName() {
+    public String getLetterDisplayName() {
         return strip(config.getString(LETTER_DISPLAYNAME, "")); // 1.1.8
     }
 
     // Lore should not be colorized
-    String getLetterFrom(String player) {
+    public String getLetterFrom(String player) {
         return String.format(strip(config.getString(LETTER_FROM)), player); // 1.1.8
     }
 
     // LetterRenderer version
-    String getLetterFrom2(String player) {
+    public String getLetterFrom2(String player) {
         return String.format(colorize2(config.getString(LETTER_FROM)), player); // 1.1.8
     }
 
     // Lore should not be colorized
-    String getLetterTo(String player) {
+    public String getLetterTo(String player) {
         return String.format(strip(config.getString(LETTER_TO)), player); // 1.1.8
     }
 
     // Lore should not be colorized
-    String getParchmentDisplayName() {
+    public String getParchmentDisplayName() {
         return strip(config.getString(PARCHMENT_DISPLAYNAME, "")); // 1.1.8
     }
 
-    String getInfoLine1() {
+    public String getInfoLine1() {
         return colorize(config.getString(INFO_LINE1, "")); // 1.1.0
     }
 
-    String getInfoLine2() {
+    public String getInfoLine2() {
         return colorize(config.getString(INFO_LINE2, "")); // 1.1.0
     }
 
-    String getInfoLine3() {
+    public String getInfoLine3() {
         return colorize(config.getString(INFO_LINE3, "")); // 1.1.0
     }
 
-    String getInfoLine4() {
+    public String getInfoLine4() {
         return colorize(config.getString(INFO_LINE4, "")); // 1.1.0
     }
 
     @SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions"})
-    void clog(Level level, String message) {
+    public void clog(Level level, String message) {
         if(!debug && (level != Level.SEVERE && level != Level.WARNING && level != Level.INFO)) {
             return;
         }

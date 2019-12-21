@@ -1,4 +1,4 @@
-package se.troed.plugin.Courier;
+package se.troed.plugin.Courier.events;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -22,6 +22,12 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.material.MaterialData;
+import se.troed.plugin.Courier.Courier;
+import se.troed.plugin.Courier.Letter;
+import se.troed.plugin.Courier.Tracker;
+import se.troed.plugin.Courier.postmen.Postman;
+import se.troed.plugin.Courier.renderers.FramedLetterRenderer;
+import se.troed.plugin.Courier.renderers.LetterRenderer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +36,7 @@ import java.util.ListIterator;
 import java.util.logging.Level;
 
 @SuppressWarnings("UnusedDeclaration")
-class CourierEventListener implements Listener {
+public class CourierEventListener implements Listener {
     private final Courier plugin;
     private final Tracker tracker;
 
@@ -53,7 +59,7 @@ class CourierEventListener implements Listener {
     void onCourierDeliveryEvent(CourierDeliveryEvent e) {
         if(e.getPlayer()!=null && e.getId()!=-1) {
             plugin.getCConfig().clog(Level.FINE, "Delivered letter to " + e.getPlayer().getName() + " with id " + e.getId());
-            plugin.getCourierdb().setDelivered(e.getPlayer().getName(), e.getId());
+            plugin.getCourierDB().setDelivered(e.getPlayer().getName(), e.getId());
         }
     }
 
@@ -61,7 +67,7 @@ class CourierEventListener implements Listener {
     void onCourierReadEvent(CourierReadEvent e) {
         if(e.getPlayer()!=null && e.getId()!=-1) {
             plugin.getCConfig().clog(Level.FINE, e.getPlayer().getName() + " has read the letter with id " + e.getId());
-            plugin.getCourierdb().setRead(e.getPlayer().getName(), e.getId());
+            plugin.getCourierDB().setRead(e.getPlayer().getName(), e.getId());
         }
     }
 
@@ -124,7 +130,7 @@ class CourierEventListener implements Listener {
         Letter letter = tracker.getAndRemoveDrop(e.getEntity().getUniqueId());
         if(letter != null) {
             tracker.removeLetter(letter.getId());
-            plugin.getCourierdb().deleteMessage((short)letter.getId());
+            plugin.getCourierDB().deleteMessage((short)letter.getId());
             plugin.getCConfig().clog(Level.FINE, "Dropped Letter " + letter.getId() + " despawned, was removed from database");
         }
     }
@@ -142,7 +148,7 @@ class CourierEventListener implements Listener {
             Player p = tracker.getSmelter(e.getBlock().getLocation());
             if(p != null && letter.isAllowedToSee(p)) {
                 tracker.removeLetter(letter.getId());
-                plugin.getCourierdb().deleteMessage((short)letter.getId());
+                plugin.getCourierDB().deleteMessage((short)letter.getId());
                 plugin.getCConfig().clog(Level.FINE, "Letter " + letter.getId() + " was burnt in a furnace by " + p.getName() + ", removed from database");
             }
         }
@@ -258,7 +264,7 @@ class CourierEventListener implements Listener {
                 e.getPlayer().getEquipment().setItemInMainHand(letter); // REALLY replaces what's there
 
                 // todo: quick render
-                e.getPlayer().sendMap(plugin.getServer().getMap(plugin.getCourierdb().getCourierMapId()));
+                e.getPlayer().sendMap(plugin.getServer().getMap(plugin.getCourierDB().getCourierMapId()));
 
                 if(e.getRightClicked() instanceof Enderman) {
                     ((Enderman)e.getRightClicked()).setCarriedBlock(Material.AIR.createBlockData());
@@ -287,13 +293,13 @@ class CourierEventListener implements Listener {
     ItemStack convertMap(int id) {
         if(id == 0) {
             // special case. MapID 0 was a valid Courier Letter, Enchantment Level 0 is not!
-            int newId = plugin.getCourierdb().generateUID();
+            int newId = plugin.getCourierDB().generateUID();
             if(newId == -1) {
                 plugin.getCConfig().clog(Level.SEVERE, "Out of unique message IDs! Notify your admin!");
                 return null;
             }
             plugin.getCConfig().clog(Level.FINE, "Converting unique Courier Letter 0 to " + newId);
-            plugin.getCourierdb().changeId(id, newId);
+            plugin.getCourierDB().changeId(id, newId);
             id = newId;
         } else {
             plugin.getCConfig().clog(Level.FINE, "Converting unique Courier Letter id " + id);
@@ -303,7 +309,7 @@ class CourierEventListener implements Listener {
         // I can trust this id to stay the same thanks to how we handle it in CourierDB
         letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
         MapMeta letterMeta = (MapMeta) letterItem.getItemMeta();
-        letterMeta.setMapId(plugin.getCourierdb().getCourierMapId());
+        letterMeta.setMapId(plugin.getCourierDB().getCourierMapId());
         letterItem.setItemMeta(letterMeta);
         return letterItem;
     }
@@ -311,7 +317,7 @@ class CourierEventListener implements Listener {
     ItemStack convertLegacyMap(int id, MapView map) {
         ItemStack converted = convertMap(id);
         // store the date in the db
-        plugin.getCourierdb().storeDate(id, map.getCenterZ());
+        plugin.getCourierDB().storeDate(id, map.getCenterZ());
         return converted;
     }
 
@@ -343,7 +349,7 @@ class CourierEventListener implements Listener {
         if(item != null && item.getType() == Material.FILLED_MAP) {
             // convert legacy and ItemFrame maps
             MapView map = plugin.getServer().getMap((short) ((MapMeta) item.getItemMeta()).getMapId());
-            if(map.getCenterX() == Courier.MAGIC_NUMBER && map.getId() != plugin.getCourierdb().getCourierMapId()) {
+            if(map.getCenterX() == Courier.MAGIC_NUMBER && map.getId() != plugin.getCourierDB().getCourierMapId()) {
                 ItemStack letterItem = null;
                 if(item.containsEnchantment(Enchantment.DURABILITY)) {
                     // unique map item having been freed from its ItemFrame
@@ -393,7 +399,7 @@ class CourierEventListener implements Listener {
             // convert legacy and ItemFrame maps
             ItemStack item = e.getItem().getItemStack();
             MapView map = plugin.getServer().getMap((short) ((MapMeta) item.getItemMeta()).getMapId());
-            if(map.getCenterX() == Courier.MAGIC_NUMBER && map.getId() != plugin.getCourierdb().getCourierMapId()) {
+            if(map.getCenterX() == Courier.MAGIC_NUMBER && map.getId() != plugin.getCourierDB().getCourierMapId()) {
                 ItemStack letterItem = null;
                 if(item.containsEnchantment(Enchantment.DURABILITY)) {
                     // unique map item having been freed from its ItemFrame
@@ -536,7 +542,7 @@ class CourierEventListener implements Listener {
                 if(item.getType() == Material.FILLED_MAP) {
                     MapView map = plugin.getServer().getMap((short) ((MapMeta) item.getItemMeta()).getMapId());
                     if (map.getCenterX() == Courier.MAGIC_NUMBER
-                            && map.getId() != plugin.getCourierdb().getCourierMapId()
+                            && map.getId() != plugin.getCourierDB().getCourierMapId()
                             && item.containsEnchantment(Enchantment.DURABILITY)) {
                         e.setCancelled(true);
                         ((ItemFrame) e.getEntity()).setItem(null);

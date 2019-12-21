@@ -1,9 +1,15 @@
-package se.troed.plugin.Courier;
+package se.troed.plugin.Courier.renderers;
 
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.map.*;
+import org.bukkit.map.MapCanvas;
+import org.bukkit.map.MapPalette;
+import org.bukkit.map.MapRenderer;
+import org.bukkit.map.MapView;
+import org.bukkit.map.MinecraftFont;
+import se.troed.plugin.Courier.Courier;
+import se.troed.plugin.Courier.Letter;
+import se.troed.plugin.Courier.events.CourierReadEvent;
 
 import java.util.logging.Level;
 

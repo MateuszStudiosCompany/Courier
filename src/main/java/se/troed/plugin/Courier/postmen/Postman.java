@@ -1,7 +1,6 @@
-package se.troed.plugin.Courier;
+package se.troed.plugin.Courier.postmen;
 
 import java.util.UUID;
-import java.util.logging.Level;
 
 import org.bukkit.Effect;
 import org.bukkit.Location;
@@ -10,6 +9,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
+import se.troed.plugin.Courier.Courier;
 
 /**
  * A Postman is a friendly Creature, tirelessly carrying around our mail
@@ -21,12 +21,12 @@ public abstract class Postman {
     protected Creature postman;
     protected EntityType type;
     protected final Courier plugin;
+    protected final Player player;
     protected final ItemStack letterItem;
     protected UUID uuid;
     protected boolean scheduledForQuickRemoval;
     protected int taskId;
     protected Runnable runnable;
-    protected final Player player;
 
     protected Postman(Courier plug, Player p, int id, EntityType t) {
         plugin = plug;
@@ -36,11 +36,11 @@ public abstract class Postman {
         letterItem = new ItemStack(Material.FILLED_MAP, 1);
         letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
         MapMeta letterMeta = (MapMeta) letterItem.getItemMeta();
-        letterMeta.setMapId(plug.getCourierdb().getCourierMapId());
+        letterMeta.setMapId(plug.getCourierDB().getCourierMapId());
         letterItem.setItemMeta(letterMeta);
     }
     
-    static Postman create(Courier plug, Player p, int id) {
+    public static Postman create(Courier plug, Player p, int id) {
         if(plug.getCConfig().getType() == EntityType.ENDERMAN) {
             return new EnderPostman(plug, p, id, plug.getCConfig().getType());
         } else {
@@ -57,7 +57,7 @@ public abstract class Postman {
 
     // yes I know this fails in many cases, we only "promise" Endermen and Villagers for now
     // would need to contain all Creatures for this to work realiably
-    static int getHeight(Courier plug) {
+    public static int getHeight(Courier plug) {
         EntityType type = plug.getCConfig().getType();
         if(type == EntityType.ENDERMAN) {
             return 3;
