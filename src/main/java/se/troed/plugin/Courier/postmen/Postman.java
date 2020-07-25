@@ -66,7 +66,7 @@ public abstract class Postman {
                   type == EntityType.COW ||
                   type == EntityType.CREEPER ||
                   type == EntityType.MUSHROOM_COW ||
-                  type == EntityType.PIG_ZOMBIE ||
+                  type == EntityType.ZOMBIFIED_PIGLIN ||
                   type == EntityType.SHEEP ||
                   type == EntityType.SKELETON ||
                   type == EntityType.SNOWMAN ||
