@@ -1,5 +1,7 @@
 package se.troed.plugin.Courier.postmen;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Effect;
@@ -38,6 +40,11 @@ public abstract class Postman {
         MapMeta letterMeta = (MapMeta) letterItem.getItemMeta();
         letterMeta.setMapId(plug.getCourierDB().getCourierMapId());
         int customModelData = plugin.getCConfig().getClosedLetterCustomModelData();
+        letterMeta.setDisplayName(plugin.getCConfig().getLetterDisplayName());
+        List<String> strings = new ArrayList<String>();
+        strings.add(plugin.getCConfig().getLetterTo(player.getName()));
+        strings.add("Open in hand to see letter details.");
+        letterMeta.setLore(strings);
         if (customModelData != 0) {
             letterMeta.setCustomModelData(customModelData);
         }
