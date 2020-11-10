@@ -400,7 +400,7 @@ public class CourierCommands /*extends ServerListener*/ implements CommandExecut
                             // also see similar Lore code in CourierEventListener
                             ItemMeta meta = letterItem.getItemMeta();
                             if(meta != null) {
-                                meta.setDisplayName("Courier Letter");
+                                meta.setDisplayName(plugin.getCConfig().getLetterDisplayName());
                                 List<String> strings = new ArrayList<String>();
                                 strings.add(letter.getTopRow());
                                 meta.setLore(strings);
