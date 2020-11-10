@@ -310,6 +310,10 @@ public class CourierEventListener implements Listener {
         letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
         MapMeta letterMeta = (MapMeta) letterItem.getItemMeta();
         letterMeta.setMapId(plugin.getCourierDB().getCourierMapId());
+        int customModelData = plugin.getCConfig().getLetterCustomModelDataOpen();
+        if (customModelData != 0) {
+            letterMeta.setCustomModelData(customModelData);
+        }
         letterItem.setItemMeta(letterMeta);
         return letterItem;
     }

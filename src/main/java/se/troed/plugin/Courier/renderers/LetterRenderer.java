@@ -2,6 +2,7 @@ package se.troed.plugin.Courier.renderers;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapPalette;
 import org.bukkit.map.MapRenderer;
@@ -92,6 +93,14 @@ public class LetterRenderer extends MapRenderer {
                     if(!letter.getRead()) {
                         CourierReadEvent event = new CourierReadEvent(player, letter.getId());
                         plugin.getServer().getPluginManager().callEvent(event);
+
+                        MapMeta letterMeta = (MapMeta) item.getItemMeta();
+                        int customModelData = plugin.getCConfig().getLetterCustomModelDataOpen();
+                        if (customModelData != 0) {
+                            letterMeta.setCustomModelData(customModelData);
+                        }
+                        item.setItemMeta(letterMeta);
+                        player.getEquipment().setItemInMainHand(item);
                         letter.setRead(true);
                     }
                 } else {

@@ -55,6 +55,14 @@ Courier:
     DisplayName: "Courier Letter"
     From: "&0Letter from&2 %s"
     To: "Letter to %s"
+    # CustomModelData NBT tag value used for creating unique custom textures for letter in your server
+    # resourcepack. Search for "CustomModelData tutorial" if you don't know how to use it.
+    # Set 0 to disable it (tag will not be added to letter item).
+    # First is texture for unread letter
+    # Second for new/read letter
+    CustomModelData:
+      Close: 0
+      Open: 0
   Parchment:
     DisplayName: "Blank Courier Parchment"
   Post:

@@ -67,6 +67,8 @@ public class CourierConfig {
     private static final String LETTER_DISPLAYNAME = "Courier.Letter.DisplayName";
     private static final String LETTER_FROM = "Courier.Letter.From";
     private static final String LETTER_TO = "Courier.Letter.To";
+    private static final String LETTER_CUSTOM_MODEL_DATA_OPEN = "Courier.Letter.CustomModelData.Open";
+    private static final String LETTER_CUSTOM_MODEL_DATA_CLOSE = "Courier.Letter.CustomModelData.Close";
     private static final String PARCHMENT_DISPLAYNAME = "Courier.Parchment.DisplayName";
     private static final String POST_NOCREDIT = "Courier.Post.NoCredit";
     private static final String POST_NORECIPIENT = "Courier.Post.NoRecipient";
@@ -410,6 +412,24 @@ public class CourierConfig {
     // Lore should not be colorized
     public String getParchmentDisplayName() {
         return strip(config.getString(PARCHMENT_DISPLAYNAME, "")); // 1.1.8
+    }
+
+    /**
+     * Get user value of CustomModelData tag for opened letter.
+     * 
+     * @return custom model data
+     */
+    public int getLetterCustomModelDataOpen() {
+        return config.getInt(LETTER_CUSTOM_MODEL_DATA_OPEN, 0); // 1.2.4
+    }
+
+    /**
+     * Get user value of CustomModelData tag for closed letter.
+     * 
+     * @return custom model data
+     */
+    public int getLetterCustomModelDataClose() {
+        return config.getInt(LETTER_CUSTOM_MODEL_DATA_CLOSE, 0); // 1.2.4
     }
 
     public String getInfoLine1() {
