@@ -37,7 +37,7 @@ public abstract class Postman {
         letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
         MapMeta letterMeta = (MapMeta) letterItem.getItemMeta();
         letterMeta.setMapId(plug.getCourierDB().getCourierMapId());
-        int customModelData = plugin.getCConfig().getLetterCustomModelDataClose();
+        int customModelData = plugin.getCConfig().getClosedLetterCustomModelData();
         if (customModelData != 0) {
             letterMeta.setCustomModelData(customModelData);
         }

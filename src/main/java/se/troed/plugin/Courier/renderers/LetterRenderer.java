@@ -95,7 +95,7 @@ public class LetterRenderer extends MapRenderer {
                         plugin.getServer().getPluginManager().callEvent(event);
 
                         MapMeta letterMeta = (MapMeta) item.getItemMeta();
-                        int customModelData = plugin.getCConfig().getLetterCustomModelDataOpen();
+                        int customModelData = plugin.getCConfig().getOpenedLetterCustomModelData();
                         if (customModelData != 0) {
                             letterMeta.setCustomModelData(customModelData);
                         }

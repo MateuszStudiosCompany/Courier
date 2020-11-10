@@ -404,7 +404,7 @@ public class CourierCommands /*extends ServerListener*/ implements CommandExecut
                                 List<String> strings = new ArrayList<String>();
                                 strings.add(letter.getTopRow());
                                 meta.setLore(strings);
-                                int customModelData = plugin.getCConfig().getLetterCustomModelDataOpen();
+                                int customModelData = plugin.getCConfig().getOpenedLetterCustomModelData();
                                 if (customModelData != 0) {
                                     meta.setCustomModelData(customModelData);
                                 }

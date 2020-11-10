@@ -419,8 +419,8 @@ public class CourierConfig {
      * 
      * @return custom model data
      */
-    public int getLetterCustomModelDataOpen() {
-        return config.getInt(LETTER_CUSTOM_MODEL_DATA_OPEN, 0); // 1.2.4
+    public int getOpenedLetterCustomModelData() {
+        return config.getInt(LETTER_CUSTOM_MODEL_DATA_OPEN, 0); // 1.3.0
     }
 
     /**
@@ -428,8 +428,8 @@ public class CourierConfig {
      * 
      * @return custom model data
      */
-    public int getLetterCustomModelDataClose() {
-        return config.getInt(LETTER_CUSTOM_MODEL_DATA_CLOSE, 0); // 1.2.4
+    public int getClosedLetterCustomModelData() {
+        return config.getInt(LETTER_CUSTOM_MODEL_DATA_CLOSE, 0); // 1.3.0
     }
 
     public String getInfoLine1() {
