@@ -1,0 +1,12 @@
+stages:
+  - build
+
+
+build:
+  image: gradle:6.7.1-jdk8
+  stage: build
+  script:
+    - gradle build
+  artifacts:
+    paths: 
+      - build/libs
