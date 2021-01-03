@@ -25,6 +25,7 @@ import org.bukkit.material.MaterialData;
 import se.troed.plugin.Courier.Courier;
 import se.troed.plugin.Courier.Letter;
 import se.troed.plugin.Courier.Tracker;
+import se.troed.plugin.Courier.letter.LetterItem;
 import se.troed.plugin.Courier.postmen.Postman;
 import se.troed.plugin.Courier.renderers.FramedLetterRenderer;
 import se.troed.plugin.Courier.renderers.LetterRenderer;
@@ -305,16 +306,8 @@ public class CourierEventListener implements Listener {
             plugin.getCConfig().clog(Level.FINE, "Converting unique Courier Letter id " + id);
         }
         // convert old Courier Letter into new
-        ItemStack letterItem = new ItemStack(Material.FILLED_MAP, 1);
-        // I can trust this id to stay the same thanks to how we handle it in CourierDB
-        letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
-        MapMeta letterMeta = (MapMeta) letterItem.getItemMeta();
-        letterMeta.setMapId(plugin.getCourierDB().getCourierMapId());
-        int customModelData = plugin.getCConfig().getOpenedLetterCustomModelData();
-        if (customModelData != 0) {
-            letterMeta.setCustomModelData(customModelData);
-        }
-        letterItem.setItemMeta(letterMeta);
+        LetterItem itemCreator = new LetterItem(id);
+        ItemStack letterItem = itemCreator.getItem();
         return letterItem;
     }
 

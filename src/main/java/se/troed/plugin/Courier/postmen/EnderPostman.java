@@ -5,7 +5,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Player;
-import org.bukkit.material.MaterialData;
 import se.troed.plugin.Courier.Courier;
 
 public class EnderPostman extends Postman {

@@ -5,20 +5,17 @@ import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MinecraftFont;
 import se.troed.plugin.Courier.Courier;
 import se.troed.plugin.Courier.Letter;
 import se.troed.plugin.Courier.Tracker;
+import se.troed.plugin.Courier.letter.LetterItem;
 import se.troed.plugin.Courier.postmen.Postman;
 import se.troed.plugin.Courier.postmen.Postmaster;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -394,25 +391,10 @@ public class CourierCommands /*extends ServerListener*/ implements CommandExecut
         
                         // no letter == we create and put in hands, or in inventory, or drop to ground
                         if(letter == null) {
-                            ItemStack letterItem = new ItemStack(Material.FILLED_MAP, 1);
-                            letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
-                            letter = tracker.getLetter(letterItem);
-                            // also see similar Lore code in CourierEventListener
-                            ItemMeta meta = letterItem.getItemMeta();
-                            if(meta != null) {
-                                meta.setDisplayName(plugin.getCConfig().getLetterDisplayName());
-                                List<String> strings = new ArrayList<String>();
-                                strings.add(letter.getTopRow());
-                                meta.setLore(strings);
-                                int customModelData = plugin.getCConfig().getOpenedLetterCustomModelData();
-                                if (customModelData != 0) {
-                                    meta.setCustomModelData(customModelData);
-                                }
-								((MapMeta) meta).setMapId(plugin.getCourierDB().getCourierMapId());
-                                letterItem.setItemMeta(meta);
-                            } else {
-                                // ???
-                            }
+                            letter = tracker.getLetter(id);
+                            LetterItem itemCreator = new LetterItem(id);
+                            itemCreator.addLore(letter.getTopRow());
+                            ItemStack letterItem = itemCreator.getItem();
 
                             // if empty hands || crafted && itemInHand == single Courier parchment
                             //   setItemInHand

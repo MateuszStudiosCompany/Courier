@@ -2,7 +2,6 @@ package se.troed.plugin.Courier.renderers;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapPalette;
 import org.bukkit.map.MapRenderer;
@@ -11,6 +10,7 @@ import org.bukkit.map.MinecraftFont;
 import se.troed.plugin.Courier.Courier;
 import se.troed.plugin.Courier.Letter;
 import se.troed.plugin.Courier.events.CourierReadEvent;
+import se.troed.plugin.Courier.letter.LetterItem;
 
 import java.util.logging.Level;
 
@@ -94,14 +94,12 @@ public class LetterRenderer extends MapRenderer {
                         CourierReadEvent event = new CourierReadEvent(player, letter.getId());
                         plugin.getServer().getPluginManager().callEvent(event);
 
-                        MapMeta letterMeta = (MapMeta) item.getItemMeta();
-                        int customModelData = plugin.getCConfig().getOpenedLetterCustomModelData();
-                        if (customModelData != 0) {
-                            letterMeta.setCustomModelData(customModelData);
-                        }
-                        item.setItemMeta(letterMeta);
-                        player.getEquipment().setItemInMainHand(item);
                         letter.setRead(true);
+
+                        LetterItem itemCreator = new LetterItem(letter);
+                        itemCreator.setLore(item.getItemMeta().getLore());
+                        item = itemCreator.getItem();
+                        player.getEquipment().setItemInMainHand(item);
                     }
                 } else {
                     if(!letter.getReceiver().equalsIgnoreCase(cachedReceiver)) {

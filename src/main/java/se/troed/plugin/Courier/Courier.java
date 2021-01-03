@@ -59,7 +59,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.net.URL;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /*
  *
@@ -74,6 +73,8 @@ import java.util.logging.Logger;
  *
  */
 public class Courier extends JavaPlugin {
+    public static Courier instance;
+
     // these must match plugin.yml
     public static final String CMD_POSTMAN = "postman";
     public static final String CMD_COURIER = "courier";
@@ -310,6 +311,7 @@ public class Courier extends JavaPlugin {
     }
 
     public void onEnable() {
+        Courier.instance = this;
         this.loadConfig();
 
         abort = false;
@@ -547,6 +549,15 @@ public class Courier extends JavaPlugin {
             return;
         }
         sender.sendMessage(message);
+    }
+
+    /**
+     * Get plugin instance
+     * 
+     * @return plugin instance
+     */
+    public static Courier getInstance() {
+        return instance;
     }
 
     public CourierConfig getCConfig() {

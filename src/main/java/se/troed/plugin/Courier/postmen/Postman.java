@@ -1,17 +1,13 @@
 package se.troed.plugin.Courier.postmen;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Effect;
 import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.MapMeta;
 import se.troed.plugin.Courier.Courier;
+import se.troed.plugin.Courier.letter.LetterItem;
 
 /**
  * A Postman is a friendly Creature, tirelessly carrying around our mail
@@ -35,20 +31,11 @@ public abstract class Postman {
         player = p;
         type = t;
         // Postmen, like players doing /letter, can create actual Items
-        letterItem = new ItemStack(Material.FILLED_MAP, 1);
-        letterItem.addUnsafeEnchantment(Enchantment.DURABILITY, id);
-        MapMeta letterMeta = (MapMeta) letterItem.getItemMeta();
-        letterMeta.setMapId(plug.getCourierDB().getCourierMapId());
-        int customModelData = plugin.getCConfig().getClosedLetterCustomModelData();
-        letterMeta.setDisplayName(plugin.getCConfig().getLetterDisplayName());
-        List<String> strings = new ArrayList<String>();
-        strings.add(plugin.getCConfig().getLetterTo(player.getName()));
-        strings.add("Open in hand to see letter details.");
-        letterMeta.setLore(strings);
-        if (customModelData != 0) {
-            letterMeta.setCustomModelData(customModelData);
-        }
-        letterItem.setItemMeta(letterMeta);
+        LetterItem itemCreator = new LetterItem(id);
+        itemCreator.setClosed();
+        itemCreator.addLore(plugin.getCConfig().getLetterTo(player.getName()));
+        itemCreator.addLore("Open in hand to see letter details.");
+        letterItem = itemCreator.getItem();
     }
     
     public static Postman create(Courier plug, Player p, int id) {
